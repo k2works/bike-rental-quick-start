@@ -4,7 +4,7 @@ import render from "@k2works/full-stack-lab";
 const contents = `
 ## [Axon Tutorial](https://docs.axoniq.io/bikerental-demo/main/)
 
-
+- [はじめに](docs/index.html)
 
 `;
 
