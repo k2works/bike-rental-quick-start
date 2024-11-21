@@ -2,20 +2,16 @@ import "./style.css";
 import render from "@k2works/full-stack-lab";
 
 const contents = `
-## 機能名
-## 仕様
-## TODOリスト
+## [Axon Tutorial](https://docs.axoniq.io/bikerental-demo/main/)
+
+
+
 `;
 
 const mindmap = `
 @startmindmap
-+ root
-++ right
-+++ right right
-*** right2
--- left
---- left left
--- left2
+
+* Axon Tutorial
 
 @endmindmap
 `;
@@ -200,5 +196,5 @@ e01 |o..o{ e03
 @enduml
 `;
 
-const mode = "APP"; // "UI" or "API" or "DOC"
+const mode = "DOC"; // "UI" or "API" or "DOC"
 render({ mindmap, contents, ui, uiModel, uiInteraction, usecase, uml, erd, mode });
