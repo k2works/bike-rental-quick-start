@@ -3,11 +3,13 @@
 
 
 
-= Introduction
+= はじめに
 
-Building a new application from scratch can be daunting, especially when learning something new. This tutorial will guide you through the various stages of development, starting with creating your first project and explaining the capabilities of Axon Framework and Axon Server.
+新しいアプリケーションをゼロから構築することは、特に新しいことを学ぶときには困難に感じるかもしれません。このチュートリアルでは、最初のプロジェクトの作成から始め、Axon FrameworkとAxon Serverの機能について説明しながら、開発のさまざまな段階を案内します。
 
-The result is a simple application you can deploy in "production". The tutorial then shows you how to evolve the application, make changes, and deploy it in different scenarios.
+その結果として、"プロダクション"にデプロイできるシンプルなアプリケーションが完成します。チュートリアルでは、アプリケーションの進化方法、変更の加え方、さまざまなシナリオでのデプロイ方法も紹介します。
 
-This tutorial will guide you through the creation of a "Bike Rental Application" using Axon Framework and Axon Server. You can follow the steps in the tutorial to complete the project from scratch or check out our link:https://github.com/axonIQ/bike-rental-quick-start/[Bike Rental Demo repository in GitHub,role=external,window=_blank].
+このチュートリアルでは、Axon FrameworkとAxon Serverを使用して「バイクレンタルアプリケーション」の作成を案内します。チュートリアルの手順に従ってプロジェクトをゼロから完成させるか、こちらのリンクをチェックしてください
+
+link:https://github.com/axonIQ/bike-rental-quick-start/[Bike Rental Demo repository in GitHub,role=external,window=_blank].
 
