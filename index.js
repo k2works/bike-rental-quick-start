@@ -5,6 +5,7 @@ const contents = `
 ## [Axon Tutorial](https://docs.axoniq.io/bikerental-demo/main/)
 
 - [はじめに](docs/index.html)
+- [新しいAxon Frameworkマルチプロジェクトの作成](docs/create-axon-framework-project.html)
 
 `;
 
