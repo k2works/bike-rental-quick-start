@@ -6,181 +6,188 @@
 
 = 新しいAxon Frameworkマルチプロジェクトの作成
 
-サンプルアプリケーションのために、API定義とメッセージを含む`core-api`モジュールと、バイクレンタルアプリケーションのビジネスロジックを含む`rental`モジュールの2つのモジュールからなるマルチモジュールmavenプロジェクトを作成します。
+サンプルアプリケーションのために、API定義とメッセージを含む `core-api` モジュールと、バイクレンタルアプリケーションのビジネスロジックを含む `rental` モジュールの2つのモジュールからなるマルチモジュールGradleプロジェクトを作成します。
 
 == プロジェクト構造
 
-レンタルモジュールは*モジュラーモノリス*として設計します。つまり、プロジェクトを1つにまとめ、後でモジュールを異なる部分に分割しやすくするために、ロジックコンポーネントを分離して保持します。
-
-まず、新しいプロジェクトを作成し、ビジネスコードに集中できるようにするためのAxonFrameworkの依存関係を設定する必要があります。
-
-次の構造を持つmavenプロジェクトを作成します：
+レンタルモジュールは *モジュラーモノリス* として設計します。つまり、プロジェクトを1つにまとめ、後でモジュールを異なる部分に分割しやすくするために、ロジックコンポーネントを分離して保持します。
+まず、新しいプロジェクトを作成し、ビジネスコードに集中できるようにするためのSpring BootとAxon Frameworkの依存関係を設定する必要があります。
+次の構造を持つGradleプロジェクトを作成します：
 
 [listing]
 .バイクレンタルデモアプリケーションの構造
 ----
-📒 bike-rental <.>
-  📒 core-api <.>
-    📂 src
-      📂 main
-        📂 java
-           📦 io.axoniq.demo.bikerental.coreapi <.>
-    📄 pom.xml <.>
-  📒 rental <.>
-    📂 src
-      📂 main
-        📂 java
-           📦 io.axoniq.demo.bikerental.rental <.>
-    📄 pom.xml <.>
-  📄 pom.xml <.>
+📂 app
+  📂 bike-rental
+    📂	core-api
+      📂 src
+        📂 main
+          📂 java
+             📦 io.axoniq.demo.bikerental.coreapi
+      📄 build.gradle.kts
+    📂 rental
+      📂 src
+        📂 main
+          📂 java
+             📦 io.axoniq.demo.bikerental.rental
+      📄 build.gradle.kts
+    📄 settings.gradle.kts
+    📄 build.gradle.kts
 ----
 
-<.> `bike-rental`ルートプロジェクトは、アプリケーションのすべてのモジュールを含む親プロジェクトです。このルートプロジェクトは、すべてのモジュールに対してSpringBootサポートを設定するために`org.springframework.boot:spring-boot-starter-parent`を親として定義します。
-<.> `core-api`プロジェクトには、異なるモジュール間で通信に使用されるメッセージのAPIと定義が含まれます。
-<.> `io.axoniq.demo.bikerental.coreapi`は、異なるモジュール間で交換される`Commands`、`Events`、および`Queries`の定義を含むクラスを配置するパッケージです。
-<.> `pom.xml` maven ディスクリプタには `core-api` プロジェクトの依存関係の宣言が含まれ、`bike-rental` を親プロジェクトとしてリンクします。
-<.> `rental`モジュールは、アプリケーションのビジネスロジックを配置する初めのポイントです。
-<.> `io.axoniq.demo.bikerental.rental`パッケージは、アプリケーションのコードを追加する場所です。
-<.> `pom.xml` mavenディスクリプタには、`rental`モジュールに必要な依存関係が含まれます。また、`bike-rental`を親プロジェクトとして宣言し、そのプロジェクトからの依存関係の宣言を継承します。
-<.> 最後に、ルート`bike-rental`プロジェクトの`pom.xml` mavenディスクリプタは、すべてのサブモジュールに継承される共通の依存関係の定義を保持します。また、プロジェクトの一部である `<modules>` のリストも保持します。
+== プロジェクトの作成
 
-Mavenおよび/またはIDEに精通している場合は、ここで説明した構造でマルチmavenプロジェクトを作成し、次のステップでAxon Frameworkをプロジェクトに設定する手順に進んでください。
-
-プロジェクトを作成するためのステップバイステップの指示に従いたい場合は、このステップの以下のセクションを読み進めてください：
-
-== ルートプロジェクトの作成
-このプロジェクトのビルドツールとしてMavenを使用します。ここでは、マルチモジュールプロジェクトを作成し、アプリケーションが分割およびスケールアウトが必要な段階に達したときに、各モジュールを独立してデプロイできるようにすることを目指します。
-
-まず、異なるモジュールやサブプロジェクトを含むルートプロジェクトを作成します。このタイプのプロジェクトは、`packaging`プロパティが`pom`に設定されたmavenプロジェクトに対応します。
-
-以下のmavenコマンドを使用して、コンソールターミナルからプロジェクトを作成できます：
+まず、新しいプロジェクトを作成します。次のコマンドを実行して、新しいプロジェクトを作成します：
 
 [source,shell]
 ----
- mvn archetype:generate \
-  -DarchetypeGroupId=org.codehaus.mojo.archetypes \
-  -DarchetypeArtifactId=pom-root \
-  -DarchetypeVersion=RELEASE \
-  -DgroupId=io.axoniq.demo.bikerental \
-  -DartifactId=bike-rental \
-  -Dversion=0.0.1-SNAPSHOT \
-  -DinteractiveMode=false
+mkdir -p app/backend/bike-rental
+cd app/backend/bike-rental
+gradle init
+
+Select type of build to generate:
+  1: Application
+  2: Library
+  3: Gradle plugin
+  4: Basic (build structure only)
+Enter selection (default: Application) [1..4]
+
+Select implementation language:
+  1: Java
+  2: Kotlin
+  3: Groovy
+  4: Scala
+  5: C++
+  6: Swift
+Enter selection (default: Java) [1..6]
+
+Enter target Java version (min: 7, default: 21):
+
+Project name (default: bike-rental):
+
+Select application structure:
+  1: Single application project
+  2: Application and library project
+Enter selection (default: Single application project) [1..2] 2
+
+Select build script DSL:
+  1: Kotlin
+  2: Groovy
+Enter selection (default: Kotlin) [1..2]
+
+Generate build using new APIs and behavior (some features may change in the next minor release)? (default: no) [yes, no]
 ----
 
-Mavenは`pom.xml`というmavenプロジェクトディスクリプタファイルが含まれた`bike-rental`フォルダーを作成します。好きなIDEにプロジェクトをインポートできます。
-
-[NOTE]
-====
-代わりに、好みのIDEを使用してプロジェクトを作成し、以下のプロジェクトプロパティを設定することもできます：
-
-[horizontal]
-archetypeGroupId:: org.codehaus.mojo.archetypes
-archetypeArtifactId:: pom-root
-archetypeVersion:: RELEASE
-groupId:: io.axoniq.demo.bikerental
-artifactId:: bike-rental
-version:: 0.0.1-SNAPSHOT
-====
-
-プロジェクトにJava 21を設定するには、pom.xmlファイルに次のプロパティを追加します：
-
-[source,xml]
-----
-include::example$root/pom.xml[tags=properties;!props-axonframework;!props-axoniq-console-client]
-----
-
-=== SpringBootの設定
-ルートプロジェクトができたら、SpringBootを使用するように設定する必要があります。SpringBoot依存関係をプロジェクトに設定する方法は2つあります：1つ目は、ルート`pom.xml`ファイルの `<dependencyManagement>` セクションに依存関係を追加する方法です。
-
-代わりに、`org.springframework.boot:spring-boot-starter-parent` にルートプロジェクトの依存関係を指定することもできます。これは、SpringBootをプロジェクトで使用するために必要なすべての依存関係をすでに定義しています。
-
-2つ目のオプションを使用します。`pom.xml`を開き、`<groupId>`タグの直前に次のスニペットを追加します：
-
-[source,xml]
-----
-include::example$root/pom.xml[tag=spring-boot-starter-parent]
-----
-
-== プロジェクトモジュールの作成
-バイクレンタルアプリケーションのメインモジュールから始めます。このモジュールにはビジネスロジックが含まれます。
-
-AxonIQテクノロジーを使用する目的は、単一のアプリケーションに集中し、すぐに複数のモジュールを扱うことによる不必要な複雑化を避けることです。しかし、異なるモジュールへの進化を容易にする方法でモジュールを構築することを目指します。この設計は*モジュラーモノリス*と呼ばれます。
-
-=== メインのレンタルモジュールを作成する
-
-メインモジュールは`rental`モジュールにします。これを作成するには、IDEを使用して新しいモジュールを追加するか、ルートbike-rentalフォルダーから次のmavenコマンドを使用します：
+マルチプロジェクトのサンプルアプリケーションが作成されるので、`core-api` と `rental` の2つのサブプロジェクトを追加して不要なファイルを削除します。
 
 [source,shell]
 ----
- mvn archetype:generate -DgroupId=io.axoniq.demo.bikerental -DartifactId=rental -Dpackage=io.axoniq.demo.bikerental.rental -DinteractiveMode=false
+spring init --package-name=io.axoniq.demo.bikerental.coreapi core-api
+spring init --package-name=io.axoniq.demo.bikerental.rental rental
 ----
 
-`mvn`コマンドを実行した後、新しい`rental`ディレクトリが表示され、中に`rental/pom.xml`ファイルがあり、プロジェクトがルートプロジェクトのサブモジュールとして宣言されています：
+== ルートプロジェクトの設定
 
-.rental/pom.xml
-[source,xml]
+ルートプロジェクトの`settings.gradle.kts`ファイルです：
+[source,kotlin]
 ----
-include::example$rental/pom.xml[tag=parent]
+rootProject.name = "bike-rental"
+include("core-api", "rental")
 ----
 
-同時に、`mvn`コマンドの実行により、ルートプロジェクトのmavenディスクリプタも変更され、新しいモジュールが含まれるようになりました：
-
-
-./pom.xml
-[source,xml]
+ルートプロジェクトの `build.gradle.kts` ファイルです：
+[source,kotlin]
 ----
-include::example$root/pom.xml[tags=modules;mod-rental;!*]
+plugins {
+    java
+}
+
+allprojects {
+    apply(plugin = "java")
+    apply(plugin = "buildlogic.java-application-conventions")
+    apply(plugin = "buildlogic.java-common-conventions")
+    apply(plugin = "buildlogic.java-library-conventions")
+}
+
+subprojects {
+    group = "io.axoniq.demo.bikerental"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+}
 ----
+
+== 各モジュールの設定
+`core-api` モジュールの `settings.gradle` ファイルを削除して `build.gradle` のファイル名を `build.gradle.kts` に変更します。
+`core-api` モジュールの `build.gradle.kts` ファイルです：
+
+[source,kotlin]
+----
+plugins {
+	id("org.springframework.boot") version "3.4.0"
+	id("io.spring.dependency-management") version "1.1.6"
+}
+
+version = "0.0.1-SNAPSHOT"
+
+java {
+	toolchain {
+		languageVersion.set(JavaLanguageVersion.of(21))
+	}
+}
+
+dependencies {
+	implementation("org.springframework.boot:spring-boot-starter")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+tasks.named<Test>("test") {
+	useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile>().configureEach {
+	options.compilerArgs.add("-parameters")
+}
+----
+
+`rental` モジュールの `settings.gradle` ファイルを削除して `build.gradle` のファイル名を `build.gradle.kts` に変更します。
+`rental` モジュールの `build.gradle.kts` ファイルです：
+
+[source,kotlin]
+----
+plugins {
+	id("org.springframework.boot") version "3.4.0"
+	id("io.spring.dependency-management") version "1.1.6"
+}
+
+version = "0.0.1-SNAPSHOT"
+
+java {
+	toolchain {
+		languageVersion.set(JavaLanguageVersion.of(21))
+	}
+}
+
+dependencies {
+	implementation("org.springframework.boot:spring-boot-starter")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	api(project(":core-api"))
+}
+
+tasks.named<Test>("test") {
+	useJUnitPlatform()
+}
+----
+
+`app` `list` `utilites` は不要なので削除します。
 
 IDEは新しいプロジェクトをサブモジュールとして表示するはずです。
 
-NOTE: IDEが新しいモジュールを検出しない場合は、プロジェクト構造を更新し、IDEのMavenプロジェクトを再読み込みする必要があるかもしれません。
-
-=== core-apiサブプロジェクトの作成
-
-ビジネスロジックはシングル`rental`モジュールでコーディングしますが、複数のモジュール（またはマイクロサービス）に進化する必要がある場合に備えて、プロジェクトを分割できるようにしたいということもすでに述べました。
-
-したがって、異なるモジュール間で通信に使用するメッセージやクラスの定義を含むモジュールを持ちます。このモジュールを`core-api`と名付けます。
-
-`core-api`サブモジュールを作成するには、IDEを使用して新しいモジュールを作成するか（ルートプロジェクトを親として作成することを確認）、ルートプロジェクトのフォルダーから次のmavenコマンドを使用します：
-
-[source,shell]
-----
- mvn archetype:generate -DgroupId=io.axoniq.demo.bikerental -DartifactId=core-api -Dpackage=io.axoniq.demo.bikerental.coreapi -DinteractiveMode=false
-----
-
-コマンドを実行後、ルートプロジェクトを親として宣言する`pom.xml`ファイルを持つ新しいcore-apiプロジェクトが表示されます：
-
-./core-api/pom.xml
-[source,xml]
-----
-include::example$core-api/pom.xml[tag=parent]
-----
-
-また、ルートプロジェクトのmavenディスクリプタにも`core-api`がモジュールとして含まれるようになります：
-
-./pom.xml
-[source,xml]
-----
-include::example$root/pom.xml[tags=modules;mod-rental;mod-core-api;!*]
-----
-
-IDEは2つのサブプロジェクトをモジュールとして認識するはずです。
-
-NOTE: IDEが新しいモジュールを検出しない場合は、プロジェクト構造を更新し、IDEのMavenプロジェクトを再読み込みする必要があるかもしれません。
-
-=== メインのレンタルモジュールに依存関係を追加する
-
-プロジェクトのマルチモジュール構造を作成する最後のステップとして、メインの`rental`モジュールで`core-api`モジュールを使用することを宣言します。
-
-そのために、`rental`モジュールのmavenディスクリプタファイルに次の依存関係を宣言します：
-
-.rental/pom.xml
-[source,xml]
-----
-include::example$rental/pom.xml[tags=dependencies;deps-core-api;!*]
-----
-
-この最後のステップを完了すると、プロジェクトはステップの最初に説明した<<_project_structure,プロジェクト構造セクション>>の構造を持つようになります。
+NOTE: IDEが新しいモジュールを検出しない場合は、プロジェクト構造を更新し、IDEのGradleプロジェクトを再読み込みする必要があるかもしれません。
 
 プロジェクトが作成されたら、次のステップでAxon Frameworkをプロジェクトにブートストラップする方法を学びます。
