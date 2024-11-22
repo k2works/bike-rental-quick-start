@@ -1,10 +1,10 @@
-package io.axoniq.demo.bikerental.coreapi;
+package io.axoniq.demo.bikerental.rental;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DemoApplicationTests {
+class RentalApplicationTests {
 
 	@Test
 	void contextLoads() {
