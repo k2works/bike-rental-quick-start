@@ -14,6 +14,7 @@ java {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("org.axonframework:axon-spring-boot-starter:4.8.1")
 	api(project(":core-api"))
 }
 

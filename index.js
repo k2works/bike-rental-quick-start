@@ -6,6 +6,7 @@ const contents = `
 
 - [はじめに](docs/index.html)
 - [新しいAxon Frameworkマルチプロジェクトの作成](docs/create-axon-framework-project.html)
+- [AxonFrameworkのブートストラップ](docs/bootstraping-axonframework.html)
 
 `;
 

@@ -14,6 +14,7 @@ java {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("org.axonframework:axon-modelling:4.8.1")
 }
 
 tasks.named<Test>("test") {
