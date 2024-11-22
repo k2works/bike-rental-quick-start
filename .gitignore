@@ -132,3 +132,5 @@ dist
 .idea
 tmp
 public
+ops/docker/mssql/log
+ops/docker/mssql/data

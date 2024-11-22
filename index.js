@@ -8,6 +8,7 @@ const contents = `
 - [新しいAxon Frameworkマルチプロジェクトの作成](docs/create-axon-framework-project.html)
 - [AxonFrameworkのブートストラップ](docs/bootstraping-axonframework.html)
 - [ 新しいバイク機能の作成を実装する](docs/implement-create-bike.html)
+- [Docker Compose を使用してアプリケーションをローカルで実行する](docs/run-app-with-docker-compose.html)
 
 `;
 

@@ -1,44 +1,55 @@
-:navtitle: Running Your Application Locally With Docker Compose
-:reftext: Running your application in your local environment with Docker Compose
+:toc: left
+:toclevels: 5
+:sectnums:
+:stem:
+:source-highlighter: coderay
 
-= Running the Application Locally With Docker Compose
+= Docker Compose を使用してアプリケーションをローカルで実行する
 
-In this step, we will see how to run your application in your local environment with everything you need.
+このステップでは、ローカル環境でアプリケーションをすべての必要なものと一緒に実行する方法を見ていきます。
 
-If this were just a simple SpringBoot application we will simply have to run it from oir IDE. But our application needs to rely on some external messaging infrastructure to route, store and deliver the messages (commands, events and queries). In our case we will use Axon Server which acts both as a message broker to route the messages and as an event store optimized for storing and retrieving events in an Event Sourcing-based system.
+これが単なるSpringBootアプリケーションであれば、IDEから実行するだけで済みます。しかし、私たちのアプリケーションは、メッセージ（コマンド、イベント、クエリ）をルーティング、保存、および配信するための外部のメッセージングインフラストラクチャに依存する必要があります。私たちの場合、Axon Server を使用します。これにより、メッセージをルーティングするためのメッセージブローカーとしてだけでなく、イベントソーシングベースのシステムでイベントを保存および取得するために最適化されたイベントストアとしても機能します。
 
-To avoid having to installing and starting the Axon Server manually, we rely on the Axon Server Docker images, and SpringBoot's support to start docker containers. In this section you will learn how to configure it to run with a single click everything you need.
+Axon Server を手動でインストールして起動する必要がないように、Axon Server Docker イメージと SpringBoot のサポートを使用して Docker コンテナを起動します。このセクションでは、必要なすべてをワンクリックで実行するように構成する方法を学びます。
 
-== Requisites
+== 必要条件
 
-To run everything we need easily and with just one click (or shortcut key combination) from your IDE we will use Docker Compose and docker images to start the Axon Server.
+必要なすべてを簡単に、IDEからワンクリック（またはショートカットキーの組み合わせ）で実行するために、Docker Compose と Docker イメージを使用して Axon Server を起動します。
 
-Make sure you have installed the link:https://docs.docker.com/engine/[Docker Engine,role=external,window=_blank] in your system, or https://docs.docker.com/engine/install/[Install Docker Engine,role=external,window=_blank] otherwise.
+システムにリンク： https://docs.docker.com/engine/[Docker Engine,role=external,window=_blank] がインストールされていることを確認してください。 あるいは、 https://docs.docker.com/engine/install/[Docker Engine をインストールする,role=external,window=_blank] こともできます。
 
-== Configuring Docker Compose
+== Docker Compose の設定
 
-=== Docker Compose descriptor
-https://docs.docker.com/compose/[Docker Compose,role=external,window=_blank] is a tool that allows you to define all the docker containers, networks, volumes and any other characteristics that we need from the infrastructure to run our application.
+=== Docker Compose ディスクリプター
 
-Even if we are going to run only one docker image (Axon Server), Docker Compose is convenient because allows to start everything in one comand.
+https://docs.docker.com/compose/[Docker Compose,role=external,window=_blank]は、必要なすべての Docker コンテナ、ネットワーク、ボリューム、およびインフラストラクチャからアプリケーションを実行するために必要なその他の特性を定義できるツールです。
 
-We will start by creating the Docker Compose configuration file. Create a `compose.yaml` file in the `root` project with the following contents:
+たとえ 1 つの Docker イメージ（Axon Server）を実行するだけでも、Docker Compose はすべてを 1 つのコマンドで起動できるため便利です。
+
+ここでは、Docker Compose 構成ファイルの作成を開始します。`root` プロジェクトに `compose.yaml` ファイルを作成し、次の内容を記述します：
 
 [source,yaml]
 .compose.yaml
 ----
-include::example$root/compose.yaml[]
+services:
+  axonserver:<.>
+    image: 'axoniq/axonserver:latest'<.>
+    environment:<.>
+      - 'AXONIQ_AXONSERVER_STANDALONE=TRUE'
+    ports:<.>
+      - '8024:8024'<.>
+      - '8124:8124'<.>
 ----
-<.> We define the name of the service for axonserver. This will be the name used for the service when started by Docker Desktop
-<.> The `axoniq/axonserver:latest` image refers to the docker image for the latest Axon Server published in the public dockerhub images repository.
-<.> We set the `AXONIQ_AXONSERVER_STANDALONE` environment property to `TRUE` so that Axon Server starts without the need to do the initial configuration.
-<.> We configure the ports that will be exported from the running docker container:
-<.> `8024` is the default port to access the Axon Server console from your browser.
-<.> `8124` is Axon Server's gRPC port used by the applications.
+<.> axonserver のサービス名を定義します。これは Docker Desktop によって起動されたときのサービス名として使用されます。
+<.> `axoniq/axonserver:latest` イメージは、パブリックdockerhubイメージリポジトリに公開されている最新の Axon Server の Docker イメージを指します。
+<.> 環境プロパティ `AXONIQ_AXONSERVER_STANDALONE` を `TRUE` に設定して、初期構成を行わずに Axon Server が起動するようにします。
+<.> 実行中の Docker コンテナからエクスポートされるポートを構成します：
+<.> `8024` はブラウザから Axon Server コンソールにアクセスするためのデフォルトポートです。
+<.> `8124` はアプリケーションによって使用される Axon Server の gRPC ポートです。
 
-CAUTION: YAML files are sensible to tabs and spaces. Make sure you use the correct indentation using tabs.
+NOTE: YAML ファイルはタブとスペースに敏感です。正しいインデントを使用していることを確認してください。
 
-Once that we have this file you should be able to run the axon server image from the command line:
+このファイルができたら、コマンドラインから axon server イメージを実行できるはずです：
 
 [,bash]
 ----
@@ -49,31 +60,28 @@ Attaching to axonserver-1
 ...
 ----
 
-We don't want to start the server manually, we will configure SpringBoot's support for Docker Compose so that the docker containers are started automatically when running the application from our IDE.
+サーバーを手動で起動することは望んでいないので、IDE からアプリケーションを実行するときに Docker コンテナが自動的に起動されるように、SpringBoot の Docker Compose サポートを構成します。
+コンソールで ^C と入力してコンテナを停止し、次のセクションに進みます。
 
-Stop the container by typing ^C on the console and move to the next section.
+=== Docker Compose を実行するための SpringBoot サポートの構成
 
-=== Configuring SpringBoot support to run Docker Compose
+v3.1以降、アプリケーションの開始にリンクされた Docker Compose サービスの開始をサポートしています。
+この機能を有効にするには、`root` プロジェクトの maven ディスクリプター `pom.xml` ファイルに次の依存関係を追加する必要があります：
 
-Since v3.1 Supports starting Docker Compose services linked to the start of our application.
-
-To enable that feature, we will need to add the following dependency to the maven descriptor `pom.xml` file in our `root` project:
-
-[,xml]
-./pom.xml
+[,kotlin]
+./app/backend/bike-rental/rental/build.gradle.kts
 ----
-include::example$root/pom.xml[tags=dependencies,indent=0]
+	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 ----
 
-Once that we have added this dependency, we can run our application right from our IDE. SpringBoot will detect the `compose.yaml` file and will start the docker containers described in that file.
+この依存関係を追加したら、IDE からアプリケーションを直接実行することができます。SpringBoot は `compose.yaml` ファイルを検出し、そのファイルに記述された Docker コンテナを開始します。
 
-== Running the application
+== アプリケーションの実行
 
-Run your application from your IDE. You should see in the logs how SpringBoot dowloads the AxonServer docker image, and starts running AxonServer automatically for you before starting your application:
+IDE からアプリケーションを実行します。SpringBoot が AxonServer の Docker イメージをダウンロードし、アプリケーションを起動する前に AxonServer を自動的に起動する様子がログに表示されるはずです：
 
 [,console]
 ----
-
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
 ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
@@ -81,7 +89,6 @@ Run your application from your IDE. You should see in the logs how SpringBoot do
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
  :: Spring Boot ::                (v3.2.1)
-
  INFO --- [Rental Monolith] i.a.d.b.rental.RentalApplication         : Starting RentalApplication using Java 21 with PID 69132 (/Users/dgomezg/projects/axon/code-samples/bike-rental-quick-start/rental/target/classes started by dgomezg in /Users/dgomezg/projects/axon/code-samples/bike-rental-quick-start)
  INFO --- [Rental Monolith] i.a.d.b.rental.RentalApplication         : No active profile set, falling back to 1 default profile: "default"
  INFO --- [Rental Monolith] .s.b.d.c.l.DockerComposeLifecycleManager : Using Docker Compose file '/Users/dgomezg/projects/axon/code-samples/bike-rental-quick-start/compose.yaml'
@@ -93,13 +100,10 @@ Run your application from your IDE. You should see in the logs how SpringBoot do
  INFO --- [Rental Monolith] verDockerComposeConnectionDetailsFactory : Detected Axon Server container. To access the dashboard, visit http://127.0.0.1:8024
 ----
 
-After the application starts, you can open your browser and go to `http://localhost:8024[,role=external,window=_blank]`. You will access the Axon Server dashboard.
+アプリケーションが起動した後、ブラウザを開いて `http://localhost:8024[,role=external,window=_blank]` にアクセスします。Axon Server ダッシュボードにアクセスできます。
 
-If you click on the "Overview" button from the right panel, you will see the Axon Server instance and your `Rental Monolith` Application connected to it.
+右パネルの「Overview」ボタンをクリックすると、Axon Server インスタンスと接続されている `Rental Monolith` アプリケーションが表示されます。
 
-image::image$AxonServer-Dashboard.png[Screenshot of the Axon Server dashboard, showing the Rental Application connected to the Axon Server instance]
+image::images/AxonServer-Dashboard.png[Axon Server ダッシュボードのスクリーンショット。Axon Server インスタンスに接続されたレンタルアプリケーションを表示]
 
-In the next step we will implement the feature to retrieve a list of all the bikes in our system. So, we will look at how to implement the `Query Model` with some projections.
-
-
-
+次のステップでは、システム内のすべてのバイクのリストを取得する機能を実装します。したがって、`Query Model` をいくつかのプロジェクションで実装する方法を見ていきます。

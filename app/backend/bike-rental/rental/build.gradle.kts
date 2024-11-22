@@ -20,10 +20,12 @@ dependencies {
 	implementation("org.axonframework:axon-micrometer:4.8.1")
 	implementation("org.axonframework.firestarter:firestarter-spring-starter:0.0.1")
 	implementation("io.axoniq.console:console-framework-client-spring-boot-starter:0.2.1")
+	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
 	api(project(":core-api"))
 }

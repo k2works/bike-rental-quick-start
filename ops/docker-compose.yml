@@ -40,7 +40,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
     env_file:
-      - ./ops/docker/mssql/sql-server-2019.env
+      - docker/mssql/sql-server-2019.env
     volumes:
       - ./ops/docker/mssql/data:/var/opt/mssql/data
       - ./ops/docker/mssql/log:/var/opt/mssql/log
@@ -57,8 +57,8 @@ services:
 
   schemaspy_mysql:
     build:
-      context: ops/docker
-      dockerfile: ./schemaspy/Dockerfile
+      context: docker
+      dockerfile: docker/schemaspy/Dockerfile
     volumes:
       - ./ops/docker/schemaspy/output/mysql:/output
       - ./ops/docker/schemaspy/config:/config
@@ -68,8 +68,8 @@ services:
       - db_mysql
   schemaspy_postgresql:
     build:
-      context: ops/docker
-      dockerfile: ./schemaspy/Dockerfile
+      context: docker
+      dockerfile: docker/schemaspy/Dockerfile
     volumes:
       - ./ops/docker/schemaspy/output/postgresql:/output
       - ./ops/docker/schemaspy/config:/config
