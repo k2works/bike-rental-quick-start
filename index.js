@@ -9,6 +9,7 @@ const contents = `
 - [AxonFrameworkのブートストラップ](docs/bootstraping-axonframework.html)
 - [ 新しいバイク機能の作成を実装する](docs/implement-create-bike.html)
 - [Docker Compose を使用してアプリケーションをローカルで実行する](docs/run-app-with-docker-compose.html)
+- [バイク登録エンドポイントの実行](docs/invoking-create-bike-endpoint.html)
 
 `;
 
