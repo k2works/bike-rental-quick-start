@@ -1,262 +1,584 @@
-:navtitle: Creating the Query Model
-:reftext: Creating the model to reply queries
+:toc: left
+:toclevels: 5
+:sectnums:
+:stem:
+:source-highlighter: coderay
 
-= Creating the Query Model
+= 問い合わせモデルの作成
 
-In this tutorial step, we will implement the Query Model, a component whose primary goal is to receive and handle any request for information about our system. These requests, which only expect some information in return and whose processing does not imply making any changes in our system, are known as *Queries*.
+このチュートリアルステップでは、問い合わせモデルを実装します。このコンポーネントの主な目的は、システムに関する情報要求を受け取り、処理することです。これらの要求は、システムに何らかの情報を返すことのみを期待し、その処理がシステムに変更を加えることを意味しないものです。これらは *クエリ（Queries）* と呼ばれます。
 
-In order to efficiently handle and process a query request, we will design our system to maintain a version (or a _view_) of the data that is updated and aligned with the format in which users can request information from the system. This component that aims to keep a copy of the data aligned with the structure of the expected query response is called the *Projection*.
+クエリ要求を効率的に処理するために、システムはユーザーが情報を要求する形式に一致したデータのバージョン（またはビュー）を保持し、それを更新するように設計されます。期待されるクエリ応答の構造に一致したデータのコピーを保持するこのコンポーネントは、*プロジェクション（Projection）* と呼ばれます。
 
-To keep the projection up to date with the changes made by other components (the command handlers) in the system, **the Query Model component must receive the event messages that represent the notification of changes made by the command model** and modify the projection accordingly. This way, our query model will be ready to handle any query request to return this updated information view.
+プロジェクションを最新の状態に保つために、**クエリモデルコンポーネントは、コマンドモデルによって行われた変更を通知するイベントメッセージを受信し、そのプロジェクションを適切に変更する必要があります。** これにより、クエリモデルは最新の情報ビューを返すためにクエリ要求を処理する準備が整います。
 
-If we recall the main diagram of our application, it's now time to focus on the bottom half of the diagram: implementing the components needed to handle and respond to queries.
+システム全体の図を思い出してください。今度は図の下半分に焦点を当て、クエリを処理し応答するために必要なコンポーネントを実装します。
 
-include::partial$messages-flow-diagram.adoc[]
+image::images/logic-diagram.png[Design diagram with the logical modules for rental application: An UI/API module contains the HTTP Controller that receives the HTTP POST request to register a new bike. The HTTP Controller sends a RegisterBikeCommand to the Command Model module, including a CommandHandler to maintain the Bike aggregates. After processing a RegisterBikeCommand, the CommandHandler sends a BikeRegisteredEvent to the Query Model module, which keeps a Projection with the data stored on a DB. The Projection on the QueryModel also receives and handles a GetBikesQuery that can be sent from another Controller in the UI/API module.]
 
-== Creating the `BikeStatus` response message
+== `BikeStatus` レスポンスメッセージの作成
 
-If, as we have just stated, our projection component will focus on handling queries to request information from our system, the first thing we need to consider when designing the query model is the exact request we will handle and how we will return the information.
+プロジェクションコンポーネントがシステムからの情報要求を処理することに焦点を当てるとした場合、クエリモデルを設計する際に最初に考慮すべきは、処理する具体的な要求と情報を返す方法です。
 
-In this case, we will implement support in our application to return information about one or more bikes, including where the bike is, whether it is available or rented and who has rented it.
+この場合、アプリケーション内で1台以上のバイクに関する情報（バイクの位置、利用可能かレンタルされているか、誰がレンタルしているか）を返すサポートを実装します。
 
-So, we will model all the information expected from these queries in the `BikeStatus` class. We will define this class in the `core-api`:
+したがって、これらのクエリから期待されるすべての情報を `BikeStatus` クラスにモデル化します。このクラスを `core-api` に定義します：
 
 [source,java]
 .core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java
 ----
-include::example$core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java[tags=BikeStatusClass;Fields;!*]
+package io.axoniq.demo.bikerental.coreapi.rental;
+
+public class BikeStatus {
+    private String bikeId;
+    private String bikeType;
+    private String location;
+    private String renter;
+    private RentalStatus status;
+
+    public BikeStatus() {
+    }
+}
 ----
 
-This class defines the fields with the information we need to present in the query response message.
+このクラスは、クエリ応答メッセージに表示する必要のある情報フィールドを定義します。
 
-To model the status of the bike, we will define the following Java enum:
+バイクの状態をモデル化するために、次のJava ENUMを定義します：
 
 [source,java]
 .core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/RentalStatus.java
 ----
-include::example$core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/RentalStatus.java[]
+package io.axoniq.demo.bikerental.coreapi.rental;
+
+public enum RentalStatus {
+    AVAILABLE,
+    REQUESTED,
+    RENTED
+}
 ----
 
-Finally, after we have all the fields for the `BikeStatus` response message, it's convenient to add methods to retrieve the information from the class. So, we can add the accessor methods:
+最後に、`BikeStatus` 応答メッセージのすべてのフィールドを取得するためのメソッドを追加します。つまり、アクセサーメソッドを追加します：
 
 [source,java]
 .core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java
 ----
-include::example$core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java[tags=BikeStatusClass;Accessors;!*]
+package io.axoniq.demo.bikerental.coreapi.rental;
+
+public class BikeStatus {
+    private String bikeId;
+    private String bikeType;
+    private String location;
+    private String renter;
+    private RentalStatus status;
+
+    public BikeStatus() {
+    }
+
+    // Accessor methods
+    public String getBikeId() {
+        return bikeId;
+    }
+
+    public String getBikeType() {
+        return bikeType;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getRenter() {
+        return renter;
+    }
+
+    public RentalStatus getStatus() {
+        return status;
+    }
+
+    public String description() {
+        switch (status) {
+            case RENTED:
+                return String.format("Bike %s was rented by %s in %s", bikeId, renter, location);
+            case AVAILABLE:
+                return String.format("Bike %s is available for rental in %s.", bikeId, location);
+            case REQUESTED:
+                return String.format("Bike %s is requested by %s in %s", bikeId, renter, location);
+            default:
+                return "Status unknown";
+        }
+    }
+}
 ----
 
+== `BikeStatus` プロジェクションの作成
 
-== Creating the `BikeStatus` projection
+バイクの状態を確認する要求に応じて公開する情報がモデル化されたので、この情報を最新の状態に保ち、クエリ要求が処理されたときに返す準備ができるコンポーネントを作成します。
 
-Now that we have modeled the information we want to expose in response to requests to check the status of a bike. We can now create the component to keep this information updated and ready to be returned when a query request is processed.
+=== `BikeStatus` クラスとSpring `JpaRepository` の作成
 
-=== Creating the `BikeStatus` class and the Spring `JpaRepository`
-We need to create a `BikeStatusProjection` class in the `...rental.query` package of our `rental` module:
+`rental` モジュールの `...rental.query` パッケージに `BikeStatusProjection` クラスを作成する必要があります：
 
 [source,java]
 .rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java
 ----
+package io.axoniq.demo.bikerental.rental.query;
+
+import org.springframework.stereotype.Component;
+
 @Component
 public class BikeStatusProjection {
 
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java[tags=Repository;!*]
+    private final BikeStatusRepository bikeStatusRepository;<.>
 
-    public BikeStatusProjection(BikeStatusRepostory repository) {
-        this.bikeStatusRepository = repository;
+    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository) {
+        this.bikeStatusRepository = bikeStatusRepository;
     }
+}
+----
+<.> `BikeStatus`モデルを永続化するためにSpringリポジトリを使用し、コマンドモデルからのイベントに基づいて最新の状態に更新します。
+プロジェクションで使用するSpring JPAリポジトリを定義する必要があります：
+
+[source,java]
+----
+package io.axoniq.demo.bikerental.rental.query;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository<.>
+public interface BikeStatusRepository
+        extends JpaRepository<BikeStatus, String> {<.>
+
 
 }
 ----
-<.> We will use a Spring repository to persist the `BikeStatus` model, which will be updated with the latest state based on the changes represented by the events received from the command model.
-
-We need to define the Spring JPA repository we will use in our projection:
-[source,java]
-----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusRepository.java[tags=InterfaceDefinition;!*]
-----
-<.> The `org.springframework.stereotype.Repository` annotation instructs Spring to generate a `Repository` component from this interface.
-<.> The convention for Spring JPA repositories is to create an interface that extends from `JpaRepository<T, ID>` where `T` is the type of the persisted classes and `ID` is the type of the identifier field in `T`. In this case, `T` should be annotated with `@Entity` and the `ID` should be of the same type as the field annotated with `@Id` in `T`
+<.> `org.springframework.stereotype.Repository` アノテーションは、Springにこのインターフェースから `Repository` コンポーネントを生成するよう指示します。
+<.> Spring JPAリポジトリの規約は、`JpaRepository<T, ID>` を拡張するインターフェースを作成することです。ここで、`T` は永続化されるクラスの型で、`ID` は `T` の識別子フィールドの型です。この場合、`T` は `@Entity` で注釈され、`ID` は `T` のフィールドが `@Id` で注釈された型と同じである必要があります。
 
 [NOTE]
 ====
-With Spring Data support, this is all we need to define to have a `Repository` implementation that supports the basic operations of storing, updating, altering, querying, and dropping `BikeStatus` instances in the DB.
-
-You can learn more about Spring Data Repositories in the section dedicated to https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html["Defining Repository Interfaces" from the Spring Data JPA Reference]
+Spring Dataのサポートにより、基本的な操作（ `BikeStatus` インスタンスのデータベース内で保存、更新、変更、クエリ、および削除）をサポートするためにこれだけを定義する必要があります。
+Spring Data JPAリファレンスの"Defining Repository Interfaces"に関するセクションでSpring Data Repositoriesについてさらに学ぶことができます。 詳細は https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html を参照してください。
 ====
 
-Finally, to make the repository work, we must modify our `BikeStatus` class to add the persistence annotations. Open the `BikeStatus` class from the `core-api` module and introduce the following changes:
+最後に、リポジトリを動作させるために、`core-api` モジュールの `BikeStatus` クラスを開き、永続化アノテーションを追加します：
 
 [source,java]
 .core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java
 ----
-include::example$core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatus.java[tags=BikeStatusEntity;BikeStatusClass;Fields;PersistenceIdAnnotation;!*]
+package io.axoniq.demo.bikerental.coreapi.rental;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity<.>
+public class BikeStatus {
+
+    @Id<.>
+    private String bikeId;
+    private String bikeType;
+    private String location;
+    private String renter;
+    private RentalStatus status;
+
+    public BikeStatus() {
+    }
+
+    public BikeStatus(String bikeId, String bikeType, String location) {
+        this.bikeId = bikeId;
+        this.bikeType = bikeType;
+        this.location = location;
+        this.status = RentalStatus.AVAILABLE;
+    }
+    // Accessor methods
+    public String getBikeId() {
+        return bikeId;
+    }
+
+    public String getBikeType() {
+        return bikeType;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getRenter() {
+        return renter;
+    }
+
+    public RentalStatus getStatus() {
+        return status;
+    }
+
+    public String description() {
+        switch (status) {
+            case RENTED:
+                return String.format("Bike %s was rented by %s in %s", bikeId, renter, location);
+            case AVAILABLE:
+                return String.format("Bike %s is available for rental in %s.", bikeId, location);
+            case REQUESTED:
+                return String.format("Bike %s is requested by %s in %s", bikeId, renter, location);
+            default:
+                return "Status unknown";
+        }
+    }
+}
 ----
-<.> The `Entity` annotation marks this class as a persistent entity. This is the `T` in the Spring's `JpaRepository<T,ID>`
+<.> `Entity` アノテーションは、このクラスを永続エンティティとしてマークします。Springの `JpaRepository<T,ID>` の `T` です。
+<.> このアノテーションは、永続化層に `bikeId` を永続レコードの識別子として考慮させるよう指示します。`@Id` で注釈されたフィールドの型（この場合は `String` ）は、Springの `JpaRepository<T,ID>` の `ID` です。
 
-<.> This annotation instruct the persistent layer to consider `bikeId` as the Id for the persistent record. The type of the field annotated with `@Id` (in this case `String`) is the `ID` in the Spring's `JpaRepository<T,ID>`
+これらの変更によって、コマンドモデルが行った変更を通知するイベントを処理し、`BikeStatus` を更新して永続化する方法を定義する準備が整いました。
 
-With these changes we are ready to define the methods in our `BikeStatusProjection` that should handle the events that notify changes made by the command model and update and persist the `BikeStatus`.
+=== `BikeRegisteredEvent` ハンドラの定義
 
-=== Define the `BikeRegisteredEvent` handler.
-
-To keep the list of our bikes in the query model up to date, we need to define a method that will be invoked whenever a new bike is registered in the system (the `BikeRegisteredEvent` represents that notification). We can do this by adding an `@EventHandler` method to our `BikeStatusProjection`:
-
+クエリモデル内のバイクリストを最新の状態に保つために、システム内で新しいバイクが登録されたときに呼び出されるメソッドを定義する必要があります（ `BikeRegisteredEvent` はその通知を表します）。`BikeStatusProjection` に `@EventHandler` メソッドを追加してこれを行うことができます：
 [source,java]
 .rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java
 ----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java[tags=ClassDefinition;BikeRegisteredEventHandler;!*]
+package io.axoniq.demo.bikerental.rental.query;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import org.axonframework.eventhandling.EventHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BikeStatusProjection {
+
+    private final BikeStatusRepository bikeStatusRepository;
+
+    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository) {
+        this.bikeStatusRepository = bikeStatusRepository;
+    }
+
+    @EventHandler<.>
+    public void on(BikeRegisteredEvent event) {<.>
+        var bikeStatus = new BikeStatus(event.bikeId(), event.bikeType(), event.location());<.>
+        bikeStatusRepository.save(bikeStatus);<.>
+    }
+
+
+}
 ----
-<.> The `@EventHandler` annotation instructs Axon Framework to register this component as a subscriber to `BikeRegisteredEvent` and call this method for each one.
-<.> By default, Axon Framework uses the first argument in the method definition to match the type of events received and passes the event as an argument to the method.
-<.> Since `BikeRegisteredEvent` implies that a new bike has been created in the system, we need to create a new instance of `BikeStatus` to represent the state of this new bike.
-<.> Finally, we will persist the `BikeStatus` using the `bikeStatusRepository`
+<.> `@EventHandler` アノテーションは、Axon Frameworkにこのコンポーネントを `BikeRegisteredEvent` のサブスクライバーとして登録し、各イベントごとにこのメソッドを呼び出すよう指示します。
+<.> Axon Frameworkはデフォルトで、メソッド定義の最初の引数を使用して受信するイベントのタイプを一致させ、イベントをメソッドの引数として渡します。
+<.> `BikeRegisteredEvent` はシステム内に新しいバイクが作成されたことを意味するため、生成する新しいバイクの状態を表す `BikeStatus` の新しいインスタンスを作成する必要があります。
+<.> 最後に、`BikeStatus` を `bikeStatusRepository` を介して永続化します。
 
-== Handling the queries from the projection.
+== プロジェクションからのクエリの処理
 
-Our next task in defining our projection is to implement the support for handling queries and returning the current information we have.
+プロジェクションの次のタスクは、クエリを処理し、現在の情報を返すサポートを実装することです。
 
-We need to add a `@QueryHandler` method for each query we want to support. Since we already have the bike statuses persisted in the way we need to return the information, we only need to query the database and return that.
+サポートするクエリごとに `@QueryHandler` メソッドを追加する必要があります。すでに必要な情報を返す方法でバイクのステータスが永続化されているので、データベースをクエリしてそれを返すだけです。
 
-Before jumping into creating the methds to handle the queries, we need to consider how we are going to identify the different queries.
+クエリを処理するメソッドを作成する前に、異なるクエリを識別する方法を考慮する必要があります。
 
-=== Using named queries.
+=== 名前付きクエリの使用
 
-Axon Framework allows different ways to identify a query message and link that query to the right method for handling it. In this tutorial we are going to start using the most simple way to identify a query: by assigning each query a name.
+Axon Frameworkは、クエリメッセージを識別し、そのクエリを正しいメソッドにリンクするためのさまざまな方法を提供しています。このチュートリアルでは、クエリを識別する最も簡単な方法を使用します：クエリごとに名前を付けます。
 
-We are going to use `String` constants to make sure we always refer to the same query name, both in the modules that send the query messages and in the components that are handling them.
+クエリ名を参照するモジュールとそれを処理するコンポーネントの両方で常に同じクエリ名を参照するようにするために、`String` 定数を使用します。
 
-So, as the first step we will create a class to define and share those query names in different components. Define the following class in the `core-api` module:
+なので、まずはこれらのクエリ名を定義し、異なるコンポーネント間で共有するクラスを作成します。`core-api` モジュールに以下のクラスを定義します。
 
 [source,java]
 ./core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatusNamedQueries.java
 ----
-include::example$core-api/src/main/java/io/axoniq/demo/bikerental/coreapi/rental/BikeStatusNamedQueries.java[]
+package io.axoniq.demo.bikerental.coreapi.rental;
+
+public class BikeStatusNamedQueries {
+    public static final String FIND_ALL = "findAll";
+    public static final String FIND_ONE = "findOne";
+    public static final String FIND_AVAILABLE = "findAvailable";
+}
 ----
 
-Now that we have the names of the queries defined, let's define the methods that will handle and respond them.
+これでクエリ名が定義されたので、次はそれらを処理し応答するメソッドを定義します。
 
 
-=== Implement a query to return all the bikes.
+=== すべての自転車を返すクエリの実装
 
-Let's start by implementing a method to return all the bikes (with their status) defined in our system. Add the following method to your `BikeStatusProjection` class:
+システム内に定義されたすべての自転車（その状態も含む）を返すメソッドの実装から始めましょう。以下のメソッドを `BikeStatusProjection` クラスに追加します：
 
 [source,java]
 .rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java
 ----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java[tags=ClassDefinition;findAllQueryHandler;!*]
+package io.axoniq.demo.bikerental.rental.query;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
+import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.queryhandling.QueryHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BikeStatusProjection {
+
+    private final BikeStatusRepository bikeStatusRepository;
+
+    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository) {
+        this.bikeStatusRepository = bikeStatusRepository;
+    }
+
+    @EventHandler
+    public void on(BikeRegisteredEvent event) {
+        var bikeStatus = new BikeStatus(event.bikeId(), event.bikeType(), event.location());
+        bikeStatusRepository.save(bikeStatus);
+    }
+
+    @QueryHandler(queryName = BikeStatusNamedQueries.FIND_ALL)<.>
+    public Iterable<BikeStatus> findAll() {<.>
+        return bikeStatusRepository.findAll();<.>
+    }
+
+}
 ----
-<.> The `org.axonframework.queryhandling.QueryHandler` annotation instructs Axon Framework to register this method as a target to invoke for certain types of queries. In this case, we identify the queries by name (although the type of the query message could also identify them, but we will see an example of that later), and we declare the specific name of the query to be handled by this method with the `queryName` attribute.
-<.> Since our query has no parameters (we want to retrieve the information for *all the bikes* in our system), our query handler method does not receive any parameters. It only needs to return the list of items we find in our DB.
-<.> As we have the information already prepared and aligned with the response format (thanks to the `EventHandler`s), we only need to retrieve the information from the repository and return it.
+<.> `org.axonframework.queryhandling.QueryHandler` アノテーションは、Axon Frameworkにこのメソッドを特定のタイプのクエリのターゲットとして登録するよう指示します。この場合、クエリ名で識別し、このメソッドで処理する特定のクエリ名を `queryName` 属性で指定します。
+<.> クエリにはパラメータがないので（システム内の *すべての自転車* の情報を取得したい場合）、クエリハンドラーメソッドはパラメータを受け取りません。DBから見つかったアイテムのリストを返すだけで済みます。
+<.> 情報はすでに準備されており（ `EventHandler` のおかげで）レスポンス形式に整っているので、リポジトリから情報を取得して返すだけで済みます。
 
-In short, we have defined a query handler method that Axon Framework will call upon the reception of a query message to `FIND_ALL` the bikes in our system. And the method will simply retrieve the up-to-date information from the DB and return the `BikeStatus` for all the bikes.
+要するに、Axon Frameworkがシステム内の `findAll` バイクのクエリメッセージを受信すると、このクエリハンドラーメソッドが呼び出されます。このメソッドはDBから最新の情報を取得し、すべてのバイクの `BikeStatus` を返すだけです。
 
 
-=== Implementing support for other queries in our projection.
+=== 他のクエリに対応するプロジェクションの実装
 
-We may need to support different query requests for information about the bikes in our system. The same projection can be used to satisfy different queries.
+システム内のバイクに関する異なるクエリリクエストをサポートする必要があります。同じプロジェクションを使用して異なるクエリを満たすことができます。
 
-For example, if we want to support queries to return all the available bikes, filtering by the type, or the `BikeStatus` for a specific bike by its `bikeId`, we can add the following two methods to our `BikeStatusProjection`:
+たとえば、特定のタイプでフィルタリングされたすべての利用可能なバイクを返すクエリや、`bikeId` によって特定のバイクの `BikeStatus` を返すクエリをサポートしたい場合、以下の2つのメソッドを `BikeStatusProjection` に追加できます：
 
 [source,java]
 .rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java
 ----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusProjection.java[tags=ClassDefinition;findAvailableQueryHandler;findOneQueryHandler;!*]
+package io.axoniq.demo.bikerental.rental.query;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
+import io.axoniq.demo.bikerental.coreapi.rental.RentalStatus;
+import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.queryhandling.QueryHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BikeStatusProjection {
+
+    private final BikeStatusRepository bikeStatusRepository;
+
+    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository) {
+        this.bikeStatusRepository = bikeStatusRepository;
+    }
+
+    @EventHandler
+    public void on(BikeRegisteredEvent event) {
+        var bikeStatus = new BikeStatus(event.bikeId(), event.bikeType(), event.location());
+        bikeStatusRepository.save(bikeStatus);
+    }
+
+    @QueryHandler(queryName = BikeStatusNamedQueries.FIND_ALL)
+    public Iterable<BikeStatus> findAll() {
+        return bikeStatusRepository.findAll();
+    }
+
+    @QueryHandler(queryName = BikeStatusNamedQueries.FIND_AVAILABLE)<.>
+    public Iterable<BikeStatus> findAvailable(String bikeType) {<.>
+        return bikeStatusRepository.findAllByBikeTypeAndStatus(bikeType, RentalStatus.AVAILABLE);
+    }
+
+    @QueryHandler(queryName = BikeStatusNamedQueries.FIND_ONE)<.>
+    public BikeStatus findOne(String bikeId) {<.>
+        return bikeStatusRepository.findById(bikeId).orElse(null);<.>
+    }
+
+}
 ----
-<.> We define a new `QueryHandler` method for the `findAvailable` query.
-<.> The query will filter by the type of the bike, so we need to add the `bikeType` argument to the method.
-<.> We need to add a specific method to our `BikeStatusRepository` that implements the query to the DB. We will do that right after this. Since we are using Spring Data, the name of the method should follow a specific pattern. (More on this in a few lines)
-<.> We define another `QueryHandler` method for the `FIND_ONE` query.
-<.> In this query, we only need to return one bike, and we need the `bikeId` as an argument to the method. In this case, we will return a single `BikeStatus` because we are returning a single element and not a collection.
-<.> The default `findById` method provided by the Spring Data `JpaRepository` returns an `Optional<T>` when we look up an item based on its `id`. This is because the `id` we are looking for may not exist in our DB. So we add a fallback to return `null` in case there is no bike  with the given `bikeId` in the DB.
+<.> `findAvailable` クエリ用の新しい `QueryHandler` メソッドを定義します。
+<.> クエリはバイクのタイプでフィルタリングするので、メソッドに `bikeType` 引数を追加する必要があります。
+<.> DBへのクエリを実装するために、`BikeStatusRepository` に特定のメソッドを追加する必要があります。Spring Dataを使用しているため、このメソッドの名前は特定のパターンに従う必要があります。（この後、もう少し詳しく説明します）
+<.> `FIND_ONE` クエリ用の別の `QueryHandler` メソッドを定義します。
+<.> このクエリでは一つのバイクのみを返し、そのためには `bikeId` をメソッドの引数として追加する必要があります。単一の要素を返すので、このメソッドは単一の `BikeStatus` を返します。
+<.> Spring Dataの `JpaRepository` が提供するデフォルトの `findById` メソッドは、`id` に基づいてアイテムを検索する際、`Optional<T>` を返します。これは、検索している `id` がDBに存在しない可能性があるためです。そのため、DBに指定された `bikeId` のバイクが存在しない場合に `null` を返すフォールバックを追加します。
 
-One last thing we need to add is a method to our Spring Data `BikeStatusRepository` to support the specific method to filter all records from the DB all the records by `bikeType` and `status`. Fortunately, thanks to Spring Data we only need to define a method in the `BikeStatusRepository` interface following a specific naming pattern, and Spring Data will generate the implementation with the corresponding SQL query to the DB.
+最後に、Spring Dataの `BikeStatusRepository` にメソッドを追加して、`bikeType` と `status` でDB内のすべてのレコードをフィルタリングする特定メソッドをサポートする必要があります。幸いにもSpring Dataのおかげで、インターフェースに特定の名前付けパターンに従う新しいメソッドを定義するだけで、Spring DataはDBへの対応するSQLクエリを持つ実装を生成します。
 
-So, go to the `BikeStatusRepository` and add the following method:
+`BikeStatusRepository`に次のメソッドを追加します：
 [source,java]
 ----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/query/BikeStatusRepository.java[tags=InterfaceDefinition;]
+package io.axoniq.demo.bikerental.rental.query;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.RentalStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface BikeStatusRepository
+        extends JpaRepository<BikeStatus, String> {
+
+    List<BikeStatus> findAllByBikeTypeAndStatus(String bikeType, RentalStatus status);
+    long countBikeStatusesByBikeType(String bikeType);
+
+}
 ----
 
 [NOTE]
 ====
-When we define a Spring Data JPA repository that extends `JpaRepository<T,ID>`, Spring Data generates for us the implementation of a basic set of methods to query the database. These generated methods cover the operations of creating, updating, querying and deleting registers from the database.
+`JpaRepository<T,ID>` を拡張したSpring Data JPAリポジトリを定義すると、Spring Dataはデータベースをクエリする基本的なメソッドセットの実装を生成します。これらの生成されたメソッドは、データベースのレコードを作成、更新、クエリ、削除する操作をカバーします。
 
-Sometimes we need to define additional queries to filter elements according to different criteria. For these types of queries, Spring Data allows us to simply define new methods in our interface and, if we follow a certain naming convention, Spring will be able to infer the query that needs to be executed against the database from the name of the method and its arguments.
+異なる基準に応じてエレメントをフィルタリングする追加のクエリを定義する必要がある場合があります。このようなタイプのクエリには、インターフェースに新しいメソッドを定義し、特定の名前付け規則に従うと、Springはメソッドの名前と引数から実行する必要のあるクエリを推論できます。
 
-This is sometimes called *Derived Queries*  and you can learn how to add specific methods for different queries in the section dedicated to https://docs.spring.io/spring-data/commons/reference/repositories/query-methods-details.html#repositories.query-methods.query-creation[Query Creation from the Spring Data Reference guide]
+これは *派生クエリ* と呼ばれることがあり、Spring Dataリファレンスガイドの https://docs.spring.io/spring-data/commons/reference/repositories/query-methods-details.html#repositories.query-methods.query-creation[Query Creation from the Spring Data Reference guide] セクションで、さまざまなクエリ用の特定のメソッドの追加方法を学ぶことができます。
 ====
 
-Now, our `BikeStatusProjection` fully supports answering to queries to `findAll` bikes, `findAvailable` bikes of a certain type, and `findOne` specific bike given its `bikeId`.
+これで `BikeStatusProjection` はシステム内のクエリに応答できるようになりました。具体的には、すべてのバイクを `findAll` 、特定のタイプの利用可能なバイクを `findAvailable` 、および `bikeId` を指定して特定のバイクを `findOne` とするクエリに対応できます。
 
-In the next section we will extend our `RestController` to add endpoints for these queries and route the queries to the system using `Query` messages.
+次のセクションでは、これらのクエリのエンドポイントを追加し、クエリをシステムにルーティングする `RestController` を拡張します。
 
-== Creating the Endpoint to accept query request.
+== クエリリクエストを受け付けるエンドポイントの作成
 
-Now that we have full support in our projection to handle queries, let's implement and expose the endpoint in our controller that will receive HTTP requests for the query and route the corresponding query message internally.
+プロジェクションでクエリを処理する完全なサポートがあるため、クエリのHTTPリクエストを受け取り、対応するクエリメッセージを内部でルーティングするコントローラのエンドポイントを実装して公開します。
 
-To do this, we will add a couple of `@GetMapping` annotated methods in the `RentalController` we created in xref:implement-create-bike.adoc#_implementing_the_http_rest_controller[Implementing the HTTP REST controller]. Those methods will use the `QueryGateway` that we already added to the `RentalController` to route the queries through Axon Framework:
+これを行うために、前のセクションで作成した `RentalController` にいくつかの `@GetMapping` アノテーション付きのメソッドを追加します。これらのメソッドは、すでに追加した `QueryGateway` を使用して、Axon Frameworkを介してクエリをルーティングします：
 
 [source,java]
-./rental/src/main/java/io/axoniq/demo/bikerental/rental/iu/RentalController.java
+./rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java
 ----
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java[tags=RentalControllerClassDefinition;BusGateways;!*]
+package io.axoniq.demo.bikerental.rental.ui;
 
+import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.queryhandling.QueryGateway;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+@RestController<.>
+@RequestMapping("/")<.>
+public class RentalController {
+
+    private final CommandGateway commandGateway;<.>
+    private final QueryGateway queryGateway;<.>
+
+    private final BikeRentalDataGenerator bikeRentalDataGenerator;
+
+    public RentalController(CommandGateway commandGateway, QueryGateway queryGateway, BikeRentalDataGenerator bikeRentalDataGenerator) {
+        this.commandGateway = commandGateway;
+        this.queryGateway = queryGateway;
+        this.bikeRentalDataGenerator = bikeRentalDataGenerator;
+    }
+
+    @PostMapping("/bikes")
+    public CompletableFuture<String> registerBike(
+            @RequestParam("bikeType") String bikeType,
+            @RequestParam("location") String location) {
+
+        RegisterBikeCommand registerBikeCommand =
+                new RegisterBikeCommand(
+                        UUID.randomUUID().toString(),
+                        bikeType,
+                        location);
+
+        CompletableFuture<String> commandResult =
+                commandGateway.send(registerBikeCommand);
+
+        return commandResult;
+    }
 }
 ----
-<.> The `RestController` annotation by spring defines this as a component that will expose the REST endpoint URLs.
-<.> The `@RequestMapping` annotation establishes the root URL for all the endpoints exposed by this controller.
-<.> The `CommandGateway` is the Axon Framework component that we already used to route commands.
-<.> The `QueryGateway` is the Axon Framework component that we will use now to route the query messages.
+<.> Springの `RestController` アノテーションは、このコンポーネントをRESTエンドポイントURLを公開するものとして定義します。
+<.> `@RequestMapping` アノテーションは、このコントローラーによって公開されるすべてのエンドポイントのルートURLを設定します。
+<.> `CommandGateway` はコマンドをルーティングするためにすでに使用したAxon Frameworkのコンポーネントです。
+<.> `QueryGateway` は、今回はクエリメッセージをルーティングするために使用するAxon Frameworkのコンポーネントです。
 
-We already configured the query handler methods in the last section to use the `queryName` attribute and link the method to the query by query name. So, we will add these query names as constants to our `RestController`:
+=== `findAll` クエリのエンドポイント実装
+
+すべてのバイクとその状態を返すエンドポイントを公開するメソッドを実装するために、次のメソッドを `RentalController` に追加します：
 
 [source,java]
-./rental/src/main/java/io/axoniq/demo/bikerental/rental/iu/RentalController.java
+./rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java
 ----
+package io.axoniq.demo.bikerental.rental.ui;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
+import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.messaging.responsetypes.ResponseTypes;
+import org.axonframework.queryhandling.QueryGateway;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 @RestController
 @RequestMapping("/")
-public class RestController {
+public class RentalController {
 
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java[tags=constantsQueryNames;!*]
+    private final CommandGateway commandGateway;
+    private final QueryGateway queryGateway;
 
+    private final BikeRentalDataGenerator bikeRentalDataGenerator;
+
+    public RentalController(CommandGateway commandGateway, QueryGateway queryGateway, BikeRentalDataGenerator bikeRentalDataGenerator) {
+        this.commandGateway = commandGateway;
+        this.queryGateway = queryGateway;
+        this.bikeRentalDataGenerator = bikeRentalDataGenerator;
+    }
+
+    @PostMapping("/bikes")
+    public CompletableFuture<String> registerBike(
+            @RequestParam("bikeType") String bikeType,
+            @RequestParam("location") String location) {
+
+        RegisterBikeCommand registerBikeCommand =
+                new RegisterBikeCommand(
+                        UUID.randomUUID().toString(),
+                        bikeType,
+                        location);
+
+        CompletableFuture<String> commandResult =
+                commandGateway.send(registerBikeCommand);
+
+        return commandResult;
+    }
+
+    @GetMapping("/bikes") //<.>
+    public CompletableFuture<List<BikeStatus>> findAll() { //<.>
+        return queryGateway.query( //<.>
+                BikeStatusNamedQueries.FIND_ALL, //<.>
+                null, //<.>
+                ResponseTypes.multipleInstancesOf(BikeStatus.class) //<.>
+        );
+    }
 }
 ----
-
-=== Implementing endpoint for `findAll` query
-
-To implement the method that exposes the endpoint for returning all the bikes and their status, add the following method to our `RestController`:
-
-[source,java]
-./rental/src/main/java/io/axoniq/demo/bikerental/rental/iu/RentalController.java
-----
-@RestController
-@RequestMapping("/")
-public class RestController {
-
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java[tags=findAll;!*]
-
-}
-----
-<.> The `GetMapping` Spring annotation specifies that this method will be invoked whenever a `GET` request to the URL `/bikes` is received by the application.
-<.> The method will return a list of `BikeStatus` responses. See the info block below for an explanation on returning the `CompletableFuture` or the `List<BikeStatus>` directly.
-<.> We will use the `query` mehtod on the `queryGateway` component provided by AxonFramework to route the query. This method receives three parameters:
-<.> The query. It could be an object or a `String` with the query name. In this case, as the queries are simple ones, we have choosen to use query names.
-<.> The query itself, with the parameters or criteria for filtering the results. In this case, the `findAll` query does not have any filter, so we specify `null` as the query.
-<.> The type of reponse we are expecting from this query. In this case, we expect one or more instances of `BikeStatus`.
+<.> `GetMapping` Springアノテーションは、このメソッドがアプリケーションに `GET` リクエストを受信したときに呼び出されることを指定します。
+<.> メソッドは `BikeStatus` レスポンスのリストを返します。`CompletableFuture` を直接返すか `List<BikeStatus>` を返すかについての説明は情報ブロックを参照してください。
+<.> クエリをルーティングするために、AxonFrameworkが提供する `queryGateway` コンポーネントの `query` メソッドを使用します。このメソッドは3つのパラメータを受け取ります。
+<.> クエリ。それはオブジェクトまたはクエリ名を含む `String` であることができます。この場合、クエリが単純なものであるため、クエリ名を使用することを選択しています。
+<.> クエリ自体であり、結果をフィルタリングするためのパラメータまたは条件を持ちます。この場合、`findAll` クエリにはフィルタがないため、クエリとして `null` を指定します。
+<.> このクエリから期待するレスポンスタイプ。この場合、`BikeStatus` のインスタンス1つ以上を期待します。
 
 [NOTE]
 ====
-*A performance consideration on returning CompletableFutures from your RestController method.*
+*RestControllerメソッドからCompletableFutureを返すことに関するパフォーマンス考慮事項*
 
-The `queryGateway` returns a `CompletableFuture<T>` which keeps a reference to the result of executing the query, and allows to get the results of type `T`
-when they are ready.
+`queryGateway` は `CompletableFuture<T>` を返します。これはクエリの実行結果への参照を保持し、その結果が準備できたときに `T` タイプの結果を取得できます。
 
-This way, the call to the `query` method does not block and returns immediately after sending the query message to the query bus, even though the response message has not been calculated.
+これにより、クエリメソッドの呼び出しはブロックせず、クエリメッセージをクエリバスに送信した後、すぐに戻ることができます。レスポンスメッセージがまだ計算されていなくてもです。
 
-This way, with Axon Framework, any code sending a query message does not need to wait until the query is fully executed and can do something else while the response is received. Only when we call the `get()` method on the `CompletableFuture` the executing thread will block until the response is ready.
+このように、Axon Frameworkを使用すると、クエリメッセージを送信するコードはクエリが完全に実行されるまで待つ必要がなく、レスポンスが受信される間に他のことを行うことができます。`CompletableFuture` の `get()` メソッドを呼び出したときにのみ、実行スレッドはレスポンスの準備ができるまでブロックされます。
 
-We could have implemented the method to return the result instead, by returning the result of callling the `CompletableFuture::get` method:
+結果の代わりにメソッドを実装し、`CompletableFuture::get` メソッドの結果を返すこともできます：
 
 [source,java]
 ----
@@ -266,61 +588,117 @@ public List<BikeStatus> findAll() {
     return result.get(); //<.>
 }
 ----
-<.> The `get()` call will block the thread until the result is received back.
+<.> `get()` 呼び出しはレスポンスが戻るまでスレッドをブロックします。
 
-In this case, the thread calling the `findAll` method will be blocked until the response message is received, and thus, we are blocking one of the Tomcat's worker threads.
+この場合、`findAll` メソッドを呼び出すスレッドはレスポンスメッセージを受信するまでブロックされ、したがって、Tomcatのワーカースレッドがブロックされます。
 
-By returning the `CompletableFuture<List<BikeStatus>>` we are not blocking the Tomcat Worker Thread inside `findAll`.
+メソッドから `CompletableFuture<List<BikeStatus>>` を返すことで、`findAll` 内でTomcatワーカースレッドをブロックしません。
+
 ====
 
-=== Implementing endpoint for `findOne` query
+=== `findOne` クエリのエンドポイント実装
 
-In a similar way, we can add another `@GetMapping` annotated method to expose the endpoint for receiving requests to get the BikeStatus for a specific bike given its `bikeId`:
+同様に、`bikeId` によって特定のバイクの `BikeStatus` を取得するリクエストを受け付けるエンドポイントを公開するためのもう1つの `@GetMapping` アノテーション付きメソッドを追加できます：
 
 [source,java]
-./rental/src/main/java/io/axoniq/demo/bikerental/rental/iu/RentalController.java
+./rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java
 ----
+package io.axoniq.demo.bikerental.rental.ui;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
+import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.messaging.responsetypes.ResponseTypes;
+import org.axonframework.queryhandling.QueryGateway;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
 @RestController
 @RequestMapping("/")
-public class RestController {
+public class RentalController {
 
-include::example$rental/src/main/java/io/axoniq/demo/bikerental/rental/ui/RentalController.java[tags=findOneQuery;!*]
+    private final CommandGateway commandGateway;
+    private final QueryGateway queryGateway;
 
+    private final BikeRentalDataGenerator bikeRentalDataGenerator;
+
+    public RentalController(CommandGateway commandGateway, QueryGateway queryGateway, BikeRentalDataGenerator bikeRentalDataGenerator) {
+        this.commandGateway = commandGateway;
+        this.queryGateway = queryGateway;
+        this.bikeRentalDataGenerator = bikeRentalDataGenerator;
+    }
+
+    @PostMapping("/bikes")
+    public CompletableFuture<String> registerBike(
+            @RequestParam("bikeType") String bikeType,
+            @RequestParam("location") String location) {
+
+        RegisterBikeCommand registerBikeCommand =
+                new RegisterBikeCommand(
+                        UUID.randomUUID().toString(),
+                        bikeType,
+                        location);
+
+        CompletableFuture<String> commandResult =
+                commandGateway.send(registerBikeCommand);
+
+        return commandResult;
+    }
+
+    @GetMapping("/bikes")
+    public CompletableFuture<List<BikeStatus>> findAll() {
+        return queryGateway.query(
+                BikeStatusNamedQueries.FIND_ALL,
+                null,
+                ResponseTypes.multipleInstancesOf(BikeStatus.class)
+        );
+    }
+
+    @GetMapping("/bikes/{bikeId}") // <.>
+    public CompletableFuture<BikeStatus> findStatus(@PathVariable("bikeId") String bikeId) { //<.>
+        return queryGateway.query(BikeStatusNamedQueries.FIND_ONE, bikeId, BikeStatus.class); //<.>
+    }
 }
 ----
-<.> The `@GetMapping` annotation configures the method to be invoked when a `GET` request to `/bikes/{bikeId}` is received, and defines the part of the URL that comes after `/bikes/` to be assigned to the `bikeId` path variable.
-<.> The `@PathVariable("bikeId")` annotation instruct Spring to provide to the method argument the value of the URL that matches the `bikeId` path variable.
-<.> We use the `query` method of the `queryGateway` to send the query message. This time, we specify the provide `bikeId` as the query criteria as the second argument, and the `BikeStatus.class` as the type of the response we are expecting from the query.
+<.> `@GetMapping` アノテーションは、`/bikes/{bikeId}` への `GET` リクエストを受信したときにメソッドが呼び出されることを設定し、`/bikes/` の後に来るURLの一部を `bikeId` パス変数に割り当てます。
+<.> `@PathVariable("bikeId")` アノテーションはSpringにURLの値を提供するよう指示し、それをメソッド引数の `bikeId` パス変数で一致させます。
+<.> クエリメッセージを送信するために `queryGateway` の `query` メソッドを使用します。この場合、提供された `bikeId` をクエリの条件として指定し、期待するレスポンスタイプとして `BikeStatus.class` を指定します。
 
-== Running and invoking the queries
+== クエリの実行と呼び出し
 
-Now we can run our application again as we described in xref:run-app-with-docker-compose.adoc[] and test that our queries work.
+これで前述した方法でアプリケーションを再実行し、クエリが機能することをテストできます。
 
 [NOTE]
 ====
-When we invoked the endpoint to register new bikes after we implemented the command handler, the command handler triggered the corresponding `BikeRegisteredEvent` to notify all the components (like our projection) of the changes.
 
-Back then, we didn't have our `BikeStatusProjection` implemented, which means we didn't have the event handlers for those `BikeRegisteredEvent`. What happen to those changes? Have we lost those events? How are we going to keep our query model updated?
+コマンドハンドラを実装した後、新しいバイクを登録するエンドポイントを呼び出したとき、コマンドハンドラは対応する `BikeRegisteredEvent` をトリガーし、変更を通知するイベントを送信します。
 
-Remember that Axon Server acts both as a Message Broker (optimized and configured for routing Events, Commands and Queries), but also as an Event Store. Which means not only that it keeps all those Events persisted, but also that its persistence is optimized for the storage and retrieval patterns needed in a Event-Sourcing architecture.
+そのとき、まだ `BikeStatusProjection` が実装されていなかったため、これらの `BikeRegisteredEvent` に対応するイベントハンドラがありませんでした。これらの変更はどうなったのでしょうか？これらのイベントは失われたのでしょうか？クエリモデルをどうやって最新に保つのでしょうか？
 
-When we start Axon Server (as configured in the `docker-compose.yml` file), Axon Server will start and all the previous events are still available. When our application connects and register the event handlers for the `BikeRegisteredEvent`, Axon Server will know that this is a new component that needs all the events from the start. Consequently, Axon Server will deliver to our `BikeStatusProjection` all the past events in the order that they happened.
+Axon Serverはメッセージブローカーとして動作し（Events、Commands、Queriesをルーティングするように最適化され構成されています）、イベントストアとしても機能します。つまり、これらのイベントがすべて永続化されているだけでなく、イベントソーシングアーキテクチャで必要なストレージと取得パターンに最適化されています。
+
+`docker-compose.yml` ファイルで設定された通りにAxon Serverを起動すると、Axon Serverは起動し、以前のすべてのイベントがまだ利用可能です。アプリケーションが接続し、`BikeRegisteredEvent` のイベントハンドラを登録すると、Axon Serverはこのコンポーネントがすべてのイベントを最初から必要とする新しいコンポーネントであることを認識します。結果として、Axon Serverは `BikeStatusProjection` に過去のすべてのイベントを発生順に配信します。
+
 ====
 
-=== Invoking the `findAll` and `findOne` queries
+=== `findAll` および `findOne` クエリの呼び出し
 
-To test our `findAll` query we simply need to send a `HTTP GET` request to the following endpoint:
+`findAll` クエリをテストするには、次のエンドポイントに `HTTP GET` リクエストを送信するだけです：
 
  http://localhost:8080/bikes
 
-To get the status of a specific bike, we need to send an `HTTP GET` request to the following URL:
+特定のバイクのステータスを取得するには、次のURLに `HTTP GET` リクエストを送信する必要があります：
 
  http://localhost:8080/bikes/{bikeId}
 
 
-==== From the command line
+==== コマンドラインから
 
-We can invoke the endpoint from the command line using the `curl` command:
+エンドポイントをコマンドラインから呼び出すには、 `curl` コマンドを使用します：
 
 [,console]
 ----
@@ -350,10 +728,10 @@ We can invoke the endpoint from the command line using the `curl` command:
 ]
 ----
 
-You can also invoke the `findOne` query:
+また、`findOne` クエリを呼び出すこともできます：
 [,console]
 ----
-%% curl -X GET "http://localhost:8080/bikes/8427681b-1ee6-4e0a-b5d8-c524b9ed553d"
+% curl -X GET "http://localhost:8080/bikes/8427681b-1ee6-4e0a-b5d8-c524b9ed553d"
 {
   "bikeId": "8427681b-1ee6-4e0a-b5d8-c524b9ed553d",
   "bikeType": "city",
@@ -364,9 +742,9 @@ You can also invoke the `findOne` query:
 ----
 
 
-==== Using IntelliJ IDEA
+==== IntelliJ IDEA を使用する
 
-If you are using IntelliJ IDEA you can edit the `requests.http` file we created at xref:invoking-create-bike-endpoint.adoc#_using_intellij_idea[Invoking the Create Bike EndPoint Using IntelliJ IDEA] to add the following lines:
+IntelliJ IDEA を使用している場合、 xref:invoking-create-bike-endpoint.adoc#_using_intellij_idea[Create Bike エンドポイントの呼び出し] で作成した `requests.http` ファイルに以下の行を追加します：
 
 [source,httprequest]
 ./requests.http
@@ -384,7 +762,7 @@ Accept: application/json
 ###
 ----
 
-Now you can click on the green "play" icon that is shown right to the left of the requests to execute the request:
+リクエストの右に表示される緑色の "play" アイコンをクリックして、リクエストを実行します：
 
 [source,console]
 ----
@@ -433,18 +811,15 @@ Response file saved.
 Response code: 200 (OK); Time: 34ms (34 ms); Content length: 497 bytes (497 B)
 ----
 
-== Conclusion.
+== 結論
 
-With this, we have implemented an example of the main message handler component that we will have on an application that is designed to be able to scale out easily:
+これにより、スケールアウトしやすいアプリケーションでメインメッセージハンドラーコンポーネントの例を実装しました：
 
-- We have a *command model* with the implementation of the `Bike` aggregate, that defines the `@CommandHandler` s and sends the events that notifies the changes made in the system as a result of processing the command. The *command model* also subscribes to those events using some `@EventSourcingHandler`. This way we can guarantee that the set of events produced by the command handler are the real *source of truth* for any changes in our system.
-- We also have defined the *query model* which consists of a *Projection* of the data kept in a structure that helps replying to any *request for information* as quick as posible. This queries are processed by the `@QueryHandlers` defined in the Projection.
-- To keep the data in the *Projection* up-to-date, we have defined a set of `@EventHandler` that will be invoked upon reception of the events sent by the `@CommandHandler`. This event handlers will update the projection's DB accordinglu.
-- Finally, we have a `@RestController` that exposes the endpoints for invoking the request to register a new bike, or the queries to retrieve information about all or one specific bike. This controller methods, will send the corresponding `Command` or `Query` messages through the `CommandGateway` or `QueryGateway` provided by Axon Framework.
+- `Bike` アグリゲートの実装を含む*コマンドモデル*があります。これは `@CommandHandler` を定義し、コマンドの処理結果としてシステムで行われた変更を通知するイベントを送信します。*コマンドモデル* はまた、いくつかの `@EventSourcingHandler` を使用してこれらのイベントを購読します。この方法で、コマンドハンドラーによって生成された一連のイベントがシステムの *真の情報源* であることを保証できます。
+- また、データの *Projection* で構成される *クエリモデル* を定義しました。これにより、情報リクエストにできるだけ迅速に応答できる構造が維持されます。これらのクエリは、Projectionに定義された `@QueryHandlers` によって処理されます。
+- *Projection* のデータを最新に保つために、`@CommandHandler` によって送信されたイベントの受信時に実行される各種 `@EventHandler` を定義しました。これらのイベントハンドラーは対応するDBを更新します。
+- 最後に、新しいバイクを登録するリクエストや全バイクまたは個々のバイクの情報を取得するクエリのエンドポイントを公開する `@RestController` を実装しました。これらのコントローラーメソッドは、Axon Framework が提供する `CommandGateway` または `QueryGateway` を介して対応する `Command` または `Query` メッセージを送信します。
 
-These are the basic components that we will use to implement any further feature in our system. Sometimes, some of those features, can be a little bit more complex and the business logic may require additional things to consider.
+これらは、システムのさらなる機能を実装するために使用する基本コンポーネントです。時々、それらの機能は少し複雑になることがあり、ビジネスロジックには追加の考慮事項が必要です。
 
-We will explore some more advanced topics of building applications with Axon Framework in upcoming sections.
-
-
-
+次のセクションでは、Axon Framework を使用したアプリケーション構築に関するより高度なトピックを探ります。

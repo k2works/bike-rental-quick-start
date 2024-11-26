@@ -11,6 +11,7 @@ const contents = `
 - [Docker Compose を使用してアプリケーションをローカルで実行する](docs/run-app-with-docker-compose.html)
 - [バイク登録エンドポイントの実行](docs/invoking-create-bike-endpoint.html)
 - [コマンドハンドラーのテスト](docs/unit-testing-commands.html)
+- [問い合わせモデルの作成](docs/create-bike-status-projection.html)
 
 `;
 
