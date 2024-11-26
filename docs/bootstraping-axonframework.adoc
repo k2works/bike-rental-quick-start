@@ -8,71 +8,80 @@
 
 このステップでは、プロジェクトでAxonFrameworkを使用するための依存関係を設定します。
 
-=== レンタルモジュールでのAxon依存関係の宣言
+== AxonのBill of Materials（BOM）の設定
 
-./rental/build.gradle.kts
-[source,kotlin]
---
-plugins {
-	id("org.springframework.boot") version "3.4.0"
-	id("io.spring.dependency-management") version "1.1.6"
-}
+Axon Frameworkを使用できるようにするために、プロジェクトの `pom.xml` ファイルに必要なAxon Frameworkの依存関係を設定できます。ただし、後で使用する予定の特定の機能に応じて、他のライブラリやツール（例えば、`micrometer` や `reactor`）の追加の依存関係が必要になる場合があります。
 
-version = "0.0.1-SNAPSHOT"
+NOTE: MavenのBill of Materials（BOM）は、互いにうまく動作することが証明されたコンポーネント、ライブラリ、およびバージョンのリストを指定するツールですが、それらが特定のモジュールで参照されるまではインポートする必要はありません。
 
-java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
-	}
-}
+Axonは、テストされてうまく動作するコンポーネント、ライブラリ、および特定のバージョンのリストを定義する `axon-bom` アーティファクトを提供します。したがって、ルートプロジェクトの `pom.xml` Mavenディスクリプタに `axon-bom` への参照を追加することから始めます。
 
-dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	implementation("org.axonframework:axon-spring-boot-starter:4.8.1")
-	api(project(":core-api"))
-}
+まず、`axon.version` を設定するプロパティを定義します：
 
-tasks.named<Test>("test") {
-	useJUnitPlatform()
-}
---
-
-=== `core-api` モジュールにAxonを使用したメッセージモデリングのサポートを追加
-
-`core-api` モジュールを使用して、レンタルアプリケーションのさまざまなモジュールと通信するメッセージを定義します。そのメッセージの一部には、AxonFrameworkによって提供されるいくつかのJavaアノテーションを使用する必要があります。したがって、プロジェクトにいくつかのAxonFramework依存関係を追加する必要があります。
-
-`core-api` に次の依存関係を追加するだけです：
-
-./core-api/build.gradle.kts
-[source,kotlin]
+./pom.xml
+[source,xml]
 ----
-plugins {
-	id("org.springframework.boot") version "3.4.0"
-	id("io.spring.dependency-management") version "1.1.6"
-}
+    <properties>
+        <axon.version>4.9.4</axon.version>
+    </properties>
 
-version = "0.0.1-SNAPSHOT"
-
-java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
-	}
-}
-
-dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	implementation("org.axonframework:axon-modelling:4.8.1")
-}
-
-tasks.named<Test>("test") {
-	useJUnitPlatform()
-}
-
-tasks.withType<JavaCompile>().configureEach {
-	options.compilerArgs.add("-parameters")
-}
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.axonframework</groupId>
+                <artifactId>axon-bom</artifactId>
+                <version>${axon.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 ----
 
-これで、自転車レンタルアプリケーションの最初の機能の実装を開始する準備が整いました。
+次に、プロジェクトのサブモジュールでAxon Frameworkを使用するための依存関係を宣言できます。
+
+anchor:axon-dependencies[]
+
+=== rentalモジュールでAxonの依存関係を宣言する
+
+ルートプロジェクトで`axon-bom`が宣言されたら、`rental` モジュールの `pom.xml` MavenディスクリプタファイルにAxon Frameworkの依存関係を指定するだけです。
+
+SpringBootを使用しているので、`axon-spring-boot-starter` を使用してAxon Frameworkを簡単にブートストラップできます。また、プロジェクトにいくつかのテストを追加するために `axon-test` 依存関係も追加します：
+
+./rental/pom.xml
+[source,xml]
+--
+    <dependencies>
+
+        <dependency>
+            <groupId>org.axonframework</groupId>
+            <artifactId>axon-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.axonframework</groupId>
+            <artifactId>axon-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>e
+--
+
+NOTE: Axon Frameworkの依存関係にはバージョンを指定していません。その理由は、これらの依存関係がルートプロジェクトで宣言された `axon-bom` ファイルで特定のバージョンとともにすでに定義されているからです。
+
+=== `core-api` モジュールでAxonを使用してメッセージをモデル化するサポートを追加する
+
+`core-api` モジュールを使用して、レンタルアプリケーションの異なるモジュール間で使用されるメッセージを定義します。これらのメッセージのいくつかは、AxonFrameworkが提供するJavaアノテーションを使用する必要があります。したがって、プロジェクトにいくつかのAxonFrameworkの依存関係を追加する必要があります。
+
+次の依存関係を `core-api` Mavenディスクリプタファイルに追加するだけです：
+
+./core-api/pom.xml
+[source,xml]
+----
+    <dependencies>
+        <dependency>
+            <groupId>org.axonframework</groupId>
+            <artifactId>axon-modelling</artifactId>
+        </dependency>
+    </dependencies>
+----
+
+これで、自転車レンタルアプリケーションの最初の機能を実装する準備が整いました。
