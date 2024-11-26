@@ -1,119 +1,149 @@
-:navtitle: Add Unit Tests For Command Handlers
-:reftext: Create Unit Tests For Command Handling
+:toc: left
+:toclevels: 5
+:sectnums:
+:stem:
+:source-highlighter: coderay
 
-= Testing Command Handlers
+= コマンドハンドラーのテスト
 
-As our application grows, we won't be able to manually test that everything works correctly after a new feature. It is convenient to have a way to test automatically that our application works as expected.
+アプリケーションが成長するにつれて、新しい機能を追加するたびに手動で全てをテストすることが難しくなります。アプリケーションが期待通りに動作することを自動的に確認できる方法があると便利です。
 
-In your applications, you probably already have some unit tests to check the business logic of your application.
+すでにアプリケーションのビジネスロジックをチェックするためのユニットテストをいくつか持っているかもしれません。
 
-Axon Framework provides you with a https://go.axoniq.io/refguide/axon-framework/testing[Test Module,role=external,window=_blank] that will help you write unit tests designed to test the processing and handling of commands, events and queries in your application.
+Axon Framework は、アプリケーション内のコマンド、イベント、およびクエリの処理とハンドリングをテストするための ユニットテストを書ける https://go.axoniq.io/refguide/axon-framework/testing[テストモジュールを提供しています,role=external,window=_blank]。
 
+このチュートリアルでは、`RegisterBikeCommand` を期待通りに処理できるかシステムをテストするユニットテストを実装します。
 
-In this tutorial step, you will implement a unit test to check if our system processes the `RegisterBikeCommand` as expected.
+== Axon Framework テストサポートの設定
 
-== Configuring Axon Framework test support
+プロジェクトの依存関係リストに `axon-test` コンポーネントを追加したので、コマンドハンドラテストを作成できます。
 
-Before writing our command handler test, we need to add the component Axon Framework provides to support unit testing.
+コマンドハンドラのテストを書く前に、ユニットテストをサポートするコンポーネント Axon Framework を追加する必要があります。
 
-We need to add the `org.axonframework:axon-test` dependency to the Maven file descriptor in our `rental` module to do this. Fortunately, we already added this dependency when xref:bootstraping-axonframework.adoc#axon-dependencies[we configured the Axon Framework dependencies].
+これを行うためには、`org.axonframework:axon-test` 依存関係を `rental` モジュールの Gradle ファイルに追加する必要があります。幸いなことに、xref:bootstraping-axonframework.adoc#axon-dependencies[Axon Framework 依存関係を設定した際に既にこの依存関係を追加しました]。
 
-Check that your `rental/pom.xml` file contains the reference to the `axon-test` module:
+`rental/build.gradle` ファイルに `axon-test` モジュールへの参照が含まれていることを確認してください:
 
-[,xml]
-.rental/pom.xml
+[,groovy]
+.rental/build.gradle.kts
 ----
-include::example$rental/pom.xml[tags=dependencies;deps-axonframework;!*,indent=0]
+dependencies {
+	testImplementation("org.axonframework:axon-test")
+}
 ----
 
-NOTE: The components provided by Axon Framework for unit testing are only needed during the `test` execution phase during the maven build process. Thus, we specify the `<scope>test</scope>` for the `axon-test` dependency.
+NOTE: Axon Framework が提供するユニットテストのコンポーネントは `test` 実行フェーズ中にのみ必要です。そのため、`axon-test` 依存関係には `testImplementation` を使用します。
 
-With the `axon-test` component added to our project's dependency list we can create our command handler test.
+== コマンド `BikeTest` の作成
 
-== Creating the command `BikeTest`
+コマンドハンドラのテストを書くために、`rental` モジュールの `/src/test/java/io/axoniq/demo/bikerental/rental/command` に `BikeTest` という名前の新しい Java クラスを作成します。
 
-To start writing our command handler test, create a new Java class with the name `BikeTest` in `/src/test/java/io/axoniq/demo/bikerental/rental/command` of your `rental` module.
-
-TIP: You can also use your IDE to create the unit test class. Open the `Bike` class and ask your IDE to generate the corresponding unit test. Depending on your IDE, the shortcut or menu may vary, but it's a shortcut worth knowing for your IDE.
+TIP: また、IDEを使用してユニットテストクラスを作成することもできます。`Bike` クラスを開き、IDEに対応するユニットテストを生成するように指示します。ショートカットやメニューはIDEによって異なる場合がありますが、知っておくと便利なショートカットです。
 
 [,java]
 ./rental/src/test/java/io/axoniq/demo/bikerental/rental/command/BikeTest.java
 ----
-include::example$rental/src/test/java/io/axoniq/demo/bikerental/rental/command/BikeTest.java[tags=BikeTestClass;!*]
+package io.axoniq.demo.bikerental.rental.command;
+
+public class BikeTest {
+
+}
 ----
 
-== Defining the `AggregateTestFixture`
+== `AggregateTestFixture` の定義
 
-Axon Framework provides a component that allows you to create unit tests specifically focused on testing the behavior of handling a command by an aggregate. This component is called `AggregateTestFixture`.
+Axon Framework は、アグリゲートでコマンドをハンドリングする動作をテストすることに特化したユニットテストを作成するコンポーネントを提供します。このコンポーネントは `AggregateTestFixture` と呼ばれます。
 
-NOTE: You can read more details about how an AggregateTestFixture works at the https://go.axoniq.io/refguide/axon-framework/testing/commands-events#command-model-testing["Command Model Testing" section of the Axon Framework reference guide,role=external,window=_blank]
+NOTE: `AggregateTestFixture` の詳細については、 https://go.axoniq.io/refguide/axon-framework/testing/commands-events#command-model-testing["Command Model Testing" Axon Framework リファレンスガイドのセクションを参照してください,role=external,window=_blank]
 
-:needs-improvement: update the url to xref section in the library once the old doc contents are moved to the library.
-
-So, we need to add and initialize the `AggregateTestFixture` for the `Bike` class (the component that handles the command we want to test):
+`Bike` クラス (テスト対象のコンポーネント) に対する `AggregateTestFixture` 追加及び初期化する必要があります。
 
 [,java]
 ./rental/src/test/java/io/axoniq/demo/bikerental/rental/command/BikeTest.java
 ----
-include::example$rental/src/test/java/io/axoniq/demo/bikerental/rental/command/BikeTest.java[tags=BikeTestClass;BikeTestFixture;InitBikeTestFixture;!*]
+package io.axoniq.demo.bikerental.rental.command;
+
+import org.axonframework.test.aggregate.AggregateTestFixture;
+import org.junit.jupiter.api.BeforeEach;
+
+public class BikeTest {
+    private AggregateTestFixture<Bike> fixture;<.>
+
+    @BeforeEach<.>
+    void setUp() {
+        fixture = new AggregateTestFixture<>(Bike.class);<.>
+    }
+
+}
 ----
-<.> Define an `AggregateTestFixture` for the `Bike` aggregate. This is the "Subject Under Test" (or SUT) for our test.
-<.> The `@BeforeEach` marks this method to be called before any test is executed in our test class. Adding the code to create the `AggregateTestFixture` here will ensure that we have a fresh fixture for each test case, and thus we make our different tests independent.
-<.> This line creates a new `AggregateTestFixture` for our `Bike` class.
+<.> テスト対象 (SUT) となる `Bike` アグリゲートの `AggregateTestFixture` を定義します。
+<.> `@BeforeEach` マークされたこのメソッドは、テストクラスのいかなるテストが実行される前に呼び出されることを意味します。このメソッド内に `AggregateTestFixture` の作成コードを追加することで、各テストケースごとに新しいフィクスチャが用意され、異なるテストが独立したものになります。
+<.> この行は `Bike` クラス用の新しい `AggregateTestFixture` を作成します。
 
-== Testing the command handler
+== コマンドハンドラのテスト
 
-Thanks to the help of the `AggregateTestFixture` we can now create a test with the following structure:
+`AggregateTestFixture` を使用すれば、以下の構造でテストを作成できます:
 
-- *Given*: Set the initial state for our test. Since we are designing our system to follow Event-Sourcing patterns, we need to set the list of events that have already happened for the same aggregate (the bike) before receiving the command.
-- *When*: Specify the command whose execution we want to test. In this case, we will test the processing of a `RegisterBikeCommand`.
-- *Expect*: We can instruct the fixture on the expectations we have from our system after processing the command. In an Event-Sourcing system, we will specify these expectations in the form of what events should have been produced by the command handler as a result of processing the command.
+- *Given*: テストの初期状態を設定。Event-Sourcing パターンに従って設計されているシステムでは、コマンドを受け取る前に既に発生したイベントのリストを設定します。
+- *When*: 実行したいコマンドを指定。この場合、`RegisterBikeCommand` の処理をテストします。
+- *Expect*: コマンド処理後の期待事項を指定。Event-Sourcing システムでは、コマンドハンドラによって生成されるべきイベントの形で这些期を指定します。
 
-So, let's define a method in our unit test to check that our system can successfully process the request to create a bike:
+システムがバイクの登録要求を正しく処理できるかをチェックするために、ユニットテストにメソッドを定義します:
 
 [,java]
 ----
-include::example$rental/src/test/java/io/axoniq/demo/bikerental/rental/command/BikeTest.java[tags=BikeTestClass;RegisterBikeCommandHandlerTest;!*]
+package io.axoniq.demo.bikerental.rental.command;
+
+import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
+import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
+import org.axonframework.test.aggregate.AggregateTestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class BikeTest {
+    private AggregateTestFixture<Bike> fixture;
+
+    @BeforeEach
+    void setUp() {
+        fixture = new AggregateTestFixture<>(Bike.class);
+    }
+
+    @Test
+    void canRegisterBike() {
+        fixture.givenNoPriorActivity()<.>
+                .when(new RegisterBikeCommand("bikeId-1234", "city-bike", "Amsterdam"))<.>
+                .expectEvents(new BikeRegisteredEvent("bikeId-1234", "city-bike", "Amsterdam"));<.>
+    }
+
+}
 ----
-<.> In our case, when we receive the `RegisterBikeCommand`, we expect that no previous events were received in the system for the same `bikeId`.
-<.> We provide the `RegisterBikeCommand` we want to send to the command handler.
-<.> After successfully processing the `RegisterBikeCommand`, we expect the command handler to produce a new `BikeRegisteredEvent` with the details of the new bike.
+<.> この場合、`RegisterBikeCommand` を受け取ったとき、同じ `bikeId` に対して前のイベントが存在しないと予想します。
+<.> 送信したい `RegisterBikeCommand` を提供します。
+<.> `RegisterBikeCommand` を正常に処理した後、コマンドハンドラが新しいバイクの詳細を持つ `BikeRegisteredEvent` を生成することを期待します。
 
-The `AggregateTestFixture` will prepare the Bike aggregate to execute the command (in this case, this step is empty, as we specified that there had been no previous activity), execute the command handler for the `RegisterBikeCommand` and assert that the command handler has emitted the `BikeRegisteredEvent` with these specific values.
+`AggregateTestFixture` は、アグリゲートを設定してコマンドを実行し (`このステップは、以前のアクティビティがなかったことを指定したため空です`)、`RegisterBikeCommand` のコマンドハンドラーを実行し、指定された値で `BikeRegisteredEvent` が生成されたことをアサートします。
 
-NOTE: You can learn more about the different things you can check from the fixture using `Matchers` in the section dedicated to https://go.axoniq.io/refguide/axon-framework/testing/commands-events#validation-phase[Validation-phase of the test fixture in the Axon Framework reference guide,role=external,window=_blank]
+NOTE: フィクスチャを使用してチェックできるさまざまな事項については、Axon Framework リファレンスガイドの https://go.axoniq.io/refguide/axon-framework/testing/commands-events#validation-phase[バリデーションフェーズのセクションを参照してください,role=external,window=_blank]
 
-:needs-improvement: update the url to xref section in the library once the old doc contents are moved to the library.
+== テストの実行
 
+IDEからテストを手動で実行することができ、テストがパスすることを確認できます。それは、フィクスチャがコマンドを処理した後で期待が満たされたことを確認したことを意味します。
 
-== Executing the test
-
-You can run the test manually from your IDE, and you should see that the test passes, meaning that the fixture has checked that the expectations are met after processing the `RegisterBikeCommand`.
-
-In addition to running the test manually, we now have a test that is automatically run by Maven every time we build the application. If you run `mvn package` from your command line, you will see the execution of the test:
+手動でテストを実行することに加えて、Gradle でアプリケーションをビルドするたびにテストが自動的に実行されることを保証します。コマンドラインで `gradle build` を実行すると、テストの実行が確認できます:
 
 [,console]
 ----
-% mvn package
+% gradle build
 [...]
-[INFO]
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running io.axoniq.demo.bikerental.rental.command.BikeTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in io.axoniq.demo.bikerental.rental.command.BikeTest
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO]
+> Task :test
+
+io.axoniq.demo.bikerental.rental.command.BikeTest > testRegisterBikeCommand PASSED
+
+BUILD SUCCESSFUL in 1s
+3 actionable tasks: 3 executed
 [...]
 ----
 
-This automatic execution of the tests guarantees that if we break the expected behavior for this command handling while implementing a new feature in the future, we will know about it immediately.
+テストが自動的に実行されることで、新しい機能を実装している際にコマンドハンドリングの期待される動作を壊してしまってもすぐにわかります。
 
-With that certainty, we can move on and implement the next feature for our system.
-
-
-
+これで安心してシステムの次の機能を実装することができます。
