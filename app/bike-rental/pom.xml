@@ -1,17 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.3.0</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
+
   <groupId>io.axoniq.demo.bikerental</groupId>
   <artifactId>bike-rental</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
   <name>bike-rental</name>
+  <description>Demo project for Axon</description>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>rental</module>
+    <module>core-api</module>
+  </modules>
 
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
@@ -20,18 +29,16 @@
     <axon.version>4.9.4</axon.version>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.axonframework</groupId>
-      <artifactId>axon-bom</artifactId>
-      <version>${axon.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.axonframework</groupId>
+        <artifactId>axon-bom</artifactId>
+        <version>${axon.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
-  <modules>
-    <module>rental</module>
-    <module>core-api</module>
-  </modules>
 </project>
