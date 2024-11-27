@@ -68,10 +68,17 @@ Attaching to axonserver-1
 v3.1以降、アプリケーションの開始にリンクされた Docker Compose サービスの開始をサポートしています。
 この機能を有効にするには、`root` プロジェクトの maven ディスクリプター `pom.xml` ファイルに次の依存関係を追加する必要があります：
 
-[,kotlin]
-./app/backend/bike-rental/rental/build.gradle.kts
+[,xml]
+./pom.xml
 ----
-	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+<dependencies>
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-docker-compose</artifactId>
+		<scope>runtime</scope>
+		<optional>true</optional>
+	</dependency>
+</dependencies>
 ----
 
 この依存関係を追加したら、IDE からアプリケーションを直接実行することができます。SpringBoot は `compose.yaml` ファイルを検出し、そのファイルに記述された Docker コンテナを開始します。
