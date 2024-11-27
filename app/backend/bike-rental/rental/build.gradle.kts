@@ -6,18 +6,10 @@ plugins {
 version = "0.0.1-SNAPSHOT"
 
 java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
-	}
+	sourceCompatibility = JavaVersion.VERSION_21
 }
 
 val axonVersion by extra("4.9.4")
-
-dependencyManagement {
-	imports {
-		mavenBom("org.axonframework:axon-bom:$axonVersion")
-	}
-}
 
 dependencies {
 	implementation(platform("org.axonframework:axon-bom:$axonVersion"))

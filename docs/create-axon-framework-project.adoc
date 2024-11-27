@@ -82,7 +82,7 @@ spring init --package-name=io.axoniq.demo.bikerental.rental rental
 
 == ルートプロジェクトの設定
 
-ルートプロジェクトの`settings.gradle.kts`ファイルです：
+ルートプロジェクトの `settings.gradle.kts` ファイルです：
 
 [source,kotlin]
 ----
@@ -134,8 +134,12 @@ plugins {
 version = "0.0.1-SNAPSHOT"
 
 java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
+	sourceCompatibility = JavaVersion.VERSION_21
+}
+
+dependencyManagement {
+	imports {
+		mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
 	}
 }
 

@@ -9,10 +9,6 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_21
 }
 
-repositories {
-	mavenCentral()
-}
-
 dependencyManagement {
 	imports {
 		mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
