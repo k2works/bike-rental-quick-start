@@ -13,5 +13,4 @@ public interface BikeStatusRepository
 
     List<BikeStatus> findAllByBikeTypeAndStatus(String bikeType, RentalStatus status);
     long countBikeStatusesByBikeType(String bikeType);
-
 }

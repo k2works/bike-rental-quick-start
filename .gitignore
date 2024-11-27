@@ -134,3 +134,7 @@ tmp
 public
 ops/docker/mssql/log
 ops/docker/mssql/data
+.db
+.DS_Store
+target
+build

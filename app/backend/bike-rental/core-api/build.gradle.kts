@@ -20,8 +20,9 @@ dependencyManagement {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.axonframework:axon-modelling:4.8.1")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+	compileOnly("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.axonframework:axon-modelling:4.9.4")
 }
 
 tasks.named<Test>("test") {

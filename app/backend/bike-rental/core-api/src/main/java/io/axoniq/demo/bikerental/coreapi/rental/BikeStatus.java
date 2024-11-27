@@ -5,7 +5,6 @@ import jakarta.persistence.Id;
 
 @Entity
 public class BikeStatus {
-
     @Id
     private String bikeId;
     private String bikeType;

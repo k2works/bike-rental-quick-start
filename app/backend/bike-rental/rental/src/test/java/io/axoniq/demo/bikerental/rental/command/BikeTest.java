@@ -20,5 +20,4 @@ public class BikeTest {
                 .when(new RegisterBikeCommand("bikeId-1234", "city-bike", "Amsterdam"))
                 .expectEvents(new BikeRegisteredEvent("bikeId-1234", "city-bike", "Amsterdam"));
     }
-
 }

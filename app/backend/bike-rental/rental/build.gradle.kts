@@ -11,21 +11,28 @@ java {
 	}
 }
 
+val axonVersion by extra("4.9.4")
+
+dependencyManagement {
+	imports {
+		mavenBom("org.axonframework:axon-bom:$axonVersion")
+	}
+}
+
 dependencies {
-	runtimeOnly("com.h2database:h2")
-	implementation("io.projectreactor:reactor-core")
-	testImplementation("io.projectreactor:reactor-test")
-	implementation("org.axonframework:axon-spring-boot-starter:4.8.1")
-	testImplementation("org.axonframework:axon-test:4.8.1")
-	implementation("org.axonframework:axon-micrometer:4.8.1")
-	implementation("org.axonframework.firestarter:firestarter-spring-starter:0.0.1")
-	implementation("io.axoniq.console:console-framework-client-spring-boot-starter:0.2.1")
-	implementation("org.springframework.boot:spring-boot-starter")
+	implementation(platform("org.axonframework:axon-bom:$axonVersion"))
+	implementation("io.axoniq.console:console-framework-client-spring-boot-starter:1.7.3")
+	runtimeOnly("org.springframework.boot:spring-boot-docker-compose")
+
+	implementation("org.axonframework:axon-spring-boot-starter")
+	implementation("io.axoniq.console:console-framework-client-spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	runtimeOnly("com.h2database:h2")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+	testImplementation("org.axonframework:axon-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 	api(project(":core-api"))
 }
 

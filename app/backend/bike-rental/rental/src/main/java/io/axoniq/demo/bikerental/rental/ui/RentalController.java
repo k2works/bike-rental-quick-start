@@ -30,7 +30,7 @@ public class RentalController {
     @PostMapping("/bikes")
     public CompletableFuture<String> registerBike(
             @RequestParam("bikeType") String bikeType,
-            @RequestParam("location") String location) {
+    @RequestParam("location") String location) {
 
         RegisterBikeCommand registerBikeCommand =
                 new RegisterBikeCommand(
@@ -53,8 +53,8 @@ public class RentalController {
         );
     }
 
-    @GetMapping("/bikes/{bikeId}") // <.>
-    public CompletableFuture<BikeStatus> findStatus(@PathVariable("bikeId") String bikeId) { //<.>
-        return queryGateway.query(BikeStatusNamedQueries.FIND_ONE, bikeId, BikeStatus.class); //<.>
+    @GetMapping("/bikes/{bikeId}")
+    public CompletableFuture<BikeStatus> findStatus(@PathVariable("bikeId") String bikeId) {
+        return queryGateway.query(BikeStatusNamedQueries.FIND_ONE, bikeId, BikeStatus.class);
     }
 }
