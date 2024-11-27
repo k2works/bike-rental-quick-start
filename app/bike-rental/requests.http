@@ -1,0 +1,24 @@
+### Register a new bike
+@rental = http://localhost:8080
+POST {{rental}}/bikes?bikeType=city&location=Utrecht
+
+### Generate bikes
+# First, generate some bikes
+POST {{rental}}/bikes/batch?count=60&type=city
+Accept: application/json
+
+### List all
+# Show available bikes
+GET {{rental}}/bikes
+Accept: application/json
+
+### Bike status
+# Show bike status
+GET {{rental}}/bikes/f6dd253e-8398-48c3-b7f1-49c52c21c594
+Accept: application/json
+
+### Request Bike
+# Request one of the available bikes
+POST {{rental}}/requestBike?bikeId=f6dd253e-8398-48c3-b7f1-49c52c21c594
+Accept: application/json
+
