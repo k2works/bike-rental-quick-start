@@ -22,14 +22,23 @@ Axon Framework は、アプリケーション内のコマンド、イベント�
 
 これを行うためには、`org.axonframework:axon-test` 依存関係を `rental` モジュールの Gradle ファイルに追加する必要があります。幸いなことに、xref:bootstraping-axonframework.adoc#axon-dependencies[Axon Framework 依存関係を設定した際に既にこの依存関係を追加しました]。
 
-`rental/build.gradle` ファイルに `axon-test` モジュールへの参照が含まれていることを確認してください:
+`app/rental/pom.xml` ファイルに `axon-test` モジュールの参照が含まれていることを確認してください:
 
-[,groovy]
-.rental/build.gradle.kts
+[,xml]
+.rental/pom.xml
 ----
-dependencies {
-	testImplementation("org.axonframework:axon-test")
-}
+<dependencies>
+
+    <dependency>
+        <groupId>org.axonframework</groupId>
+        <artifactId>axon-spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.axonframework</groupId>
+        <artifactId>axon-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
 ----
 
 NOTE: Axon Framework が提供するユニットテストのコンポーネントは `test` 実行フェーズ中にのみ必要です。そのため、`axon-test` 依存関係には `testImplementation` を使用します。
@@ -127,23 +136,29 @@ NOTE: フィクスチャを使用してチェックできるさまざまな事�
 
 == テストの実行
 
-IDEからテストを手動で実行することができ、テストがパスすることを確認できます。それは、フィクスチャがコマンドを処理した後で期待が満たされたことを確認したことを意味します。
+IDEから手動でテストを実行することができます。テストが合格することを確認してください。これは、`RegisterBikeCommand` を処理した後、フィクスチャが期待が満たされていることを確認したことを意味します。
 
-手動でテストを実行することに加えて、Gradle でアプリケーションをビルドするたびにテストが自動的に実行されることを保証します。コマンドラインで `gradle build` を実行すると、テストの実行が確認できます:
+手動でテストを実行することに加えて、アプリケーションをビルドするたびにMavenによって自動的に実行されるテストがあります。コマンドラインから `mvn package` を実行すると、テストの実行を見ることができます:
 
 [,console]
 ----
-% gradle build
+% mvn package
 [...]
-> Task :test
-
-io.axoniq.demo.bikerental.rental.command.BikeTest > testRegisterBikeCommand PASSED
-
-BUILD SUCCESSFUL in 1s
-3 actionable tasks: 3 executed
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.axoniq.demo.bikerental.rental.command.BikeTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in io.axoniq.demo.bikerental.rental.command.BikeTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
 [...]
 ----
 
-テストが自動的に実行されることで、新しい機能を実装している際にコマンドハンドリングの期待される動作を壊してしまってもすぐにわかります。
+このテストの自動実行により、将来的に新しい機能を実装しながらこのコマンド処理の期待される動作を壊すと、すぐにそのことを知ることが保証されます。
 
-これで安心してシステムの次の機能を実装することができます。
+その確信を持って、次の機能をシステムに実装して進めることができます。
