@@ -1,4 +1,0 @@
-rootProject.name = 'gs-multi-module'
-
-include 'core-api'
-include 'rental'
