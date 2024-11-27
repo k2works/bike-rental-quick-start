@@ -18,21 +18,22 @@
 .バイクレンタルデモアプリケーションの構造
 ----
 📂 app
-  📂 bike-rental
-    📂	core-api
-      📂 src
-        📂 main
-          📂 java
-             📦 io.axoniq.demo.bikerental.coreapi
+  📂 backend
+    📂 bike-rental
+      📂	core-api
+        📂 src
+          📂 main
+            📂 java
+               📦 io.axoniq.demo.bikerental.coreapi
+        📄 build.gradle.kts
+      📂 rental
+        📂 src
+          📂 main
+            📂 java
+               📦 io.axoniq.demo.bikerental.rental
+        📄 build.gradle.kts
+      📄 settings.gradle.kts
       📄 build.gradle.kts
-    📂 rental
-      📂 src
-        📂 main
-          📂 java
-             📦 io.axoniq.demo.bikerental.rental
-      📄 build.gradle.kts
-    📄 settings.gradle.kts
-    📄 build.gradle.kts
 ----
 
 == プロジェクトの作成
@@ -44,14 +45,12 @@
 mkdir -p app/backend/bike-rental
 cd app/backend/bike-rental
 gradle init
-
 Select type of build to generate:
   1: Application
   2: Library
   3: Gradle plugin
   4: Basic (build structure only)
 Enter selection (default: Application) [1..4]
-
 Select implementation language:
   1: Java
   2: Kotlin
@@ -60,21 +59,16 @@ Select implementation language:
   5: C++
   6: Swift
 Enter selection (default: Java) [1..6]
-
 Enter target Java version (min: 7, default: 21):
-
 Project name (default: bike-rental):
-
 Select application structure:
   1: Single application project
   2: Application and library project
 Enter selection (default: Single application project) [1..2] 2
-
 Select build script DSL:
   1: Kotlin
   2: Groovy
 Enter selection (default: Kotlin) [1..2]
-
 Generate build using new APIs and behavior (some features may change in the next minor release)? (default: no) [yes, no]
 ----
 
@@ -89,6 +83,7 @@ spring init --package-name=io.axoniq.demo.bikerental.rental rental
 == ルートプロジェクトの設定
 
 ルートプロジェクトの`settings.gradle.kts`ファイルです：
+
 [source,kotlin]
 ----
 rootProject.name = "bike-rental"
@@ -96,6 +91,7 @@ include("core-api", "rental")
 ----
 
 ルートプロジェクトの `build.gradle.kts` ファイルです：
+
 [source,kotlin]
 ----
 plugins {
@@ -123,13 +119,15 @@ subprojects {
 ----
 
 == 各モジュールの設定
+
 `core-api` モジュールの `settings.gradle` ファイルを削除して `build.gradle` のファイル名を `build.gradle.kts` に変更します。
+
 `core-api` モジュールの `build.gradle.kts` ファイルです：
 
 [source,kotlin]
 ----
 plugins {
-	id("org.springframework.boot") version "3.4.0"
+	id("org.springframework.boot") version "3.4.0" apply false
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
@@ -142,45 +140,16 @@ java {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+	compileOnly("org.springframework.boot:spring-boot-starter-data-jpa")
 }
 
 tasks.named<Test>("test") {
 	useJUnitPlatform()
 }
 
-tasks.withType<JavaCompile>().configureEach {
+tasks.withType<JavaCompile> {
 	options.compilerArgs.add("-parameters")
-}
-----
-
-`rental` モジュールの `settings.gradle` ファイルを削除して `build.gradle` のファイル名を `build.gradle.kts` に変更します。
-`rental` モジュールの `build.gradle.kts` ファイルです：
-
-[source,kotlin]
-----
-plugins {
-	id("org.springframework.boot") version "3.4.0"
-	id("io.spring.dependency-management") version "1.1.6"
-}
-
-version = "0.0.1-SNAPSHOT"
-
-java {
-	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
-	}
-}
-
-dependencies {
-	implementation("org.springframework.boot:spring-boot-starter")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	api(project(":core-api"))
-}
-
-tasks.named<Test>("test") {
-	useJUnitPlatform()
 }
 ----
 
