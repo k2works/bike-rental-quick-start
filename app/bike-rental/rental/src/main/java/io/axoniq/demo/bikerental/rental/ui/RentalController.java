@@ -66,6 +66,11 @@ public class RentalController {
         return commandGateway.send(new ApproveRequestCommand(bikeId, renter != null ? renter : this.bikeRentalDataGenerator.randomRenter()));
     }
 
+    @PostMapping("/rejectRequest")
+    public CompletableFuture<String> rejectRequest(@RequestParam("bikeId") String bikeId, @RequestParam(value = "renter", required = false) String renter) {
+        return commandGateway.send(new RejectRequestCommand(bikeId, renter != null ? renter : this.bikeRentalDataGenerator.randomRenter()));
+    }
+
     @PostMapping("/returnBike")
     public CompletableFuture<String> returnBike(@RequestParam("bikeId") String bikeId) {
         return commandGateway.send(new ReturnBikeCommand(bikeId, this.bikeRentalDataGenerator.randomLocation()));

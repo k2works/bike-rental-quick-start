@@ -65,4 +65,10 @@ public class BikeStatus {
         this.renter = renter;
         this.status = RentalStatus.RENTED;
     }
+
+    public void returnedAt(String location) {
+        this.location = location;
+        this.status = RentalStatus.AVAILABLE;
+        this.renter = null;
+    }
 }
