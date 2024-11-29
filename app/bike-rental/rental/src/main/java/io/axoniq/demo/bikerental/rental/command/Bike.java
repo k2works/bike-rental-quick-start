@@ -54,6 +54,15 @@ public class Bike {
         apply(new BikeInUseEvent(command.bikeId(), command.renter()));
     }
 
+    @CommandHandler
+    public void handle(RejectRequestCommand command) {
+        if (!Objects.equals(reservedBy, command.renter())
+                || reservationConfirmed) {
+            return;
+        }
+        apply(new RequestRejectedEvent(command.bikeId()));
+    }
+
     @EventSourcingHandler
     protected void handle(BikeRegisteredEvent event) {
         this.bikeId = event.bikeId();
@@ -71,5 +80,12 @@ public class Bike {
     protected void on(BikeInUseEvent event) {
         this.isAvailable = false;
         this.reservationConfirmed = true;
+    }
+
+    @EventSourcingHandler
+    protected void handle(RequestRejectedEvent event) {
+        this.reservedBy = null;
+        this.reservationConfirmed = false;
+        this.isAvailable = true;
     }
 }

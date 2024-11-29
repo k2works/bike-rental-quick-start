@@ -51,4 +51,21 @@ public class BikeTest {
                 .when(new ApproveRequestCommand("bikeId", "rider"))
                 .expectEvents(new BikeInUseEvent("bikeId", "rider"));
     }
+
+    @Test
+    void canRejectRequestedBike() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"))
+                .when(new RejectRequestCommand("bikeId", "rider"))
+                .expectEvents(new RequestRejectedEvent("bikeId"));
+    }
+
+    @Test
+    void canNotRejectRequestedForWrongRequester() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"))
+                .when(new RejectRequestCommand("bikeId", "otherRider"))
+                .expectSuccessfulHandlerExecution()
+                .expectNoEvents();
+    }
 }
