@@ -55,4 +55,9 @@ public class BikeStatus {
                 return "Status unknown";
         }
     }
+
+    public void requestedBy(String renter) {
+        this.renter = renter;
+        this.status = RentalStatus.REQUESTED;
+    }
 }

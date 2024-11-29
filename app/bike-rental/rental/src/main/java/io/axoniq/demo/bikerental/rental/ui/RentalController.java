@@ -3,6 +3,7 @@ package io.axoniq.demo.bikerental.rental.ui;
 import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
 import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
 import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.RequestBikeCommand;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
@@ -56,5 +57,10 @@ public class RentalController {
     @GetMapping("/bikes/{bikeId}")
     public CompletableFuture<BikeStatus> findStatus(@PathVariable("bikeId") String bikeId) {
         return queryGateway.query(BikeStatusNamedQueries.FIND_ONE, bikeId, BikeStatus.class);
+    }
+
+    @PostMapping("/requestBike")
+    public CompletableFuture<String> requestBike(@RequestParam("bikeId") String bikeId, @RequestParam(value = "renter", required = false) String renter) {
+        return commandGateway.send(new RequestBikeCommand(bikeId, renter != null ? renter : this.bikeRentalDataGenerator.randomRenter()));
     }
 }

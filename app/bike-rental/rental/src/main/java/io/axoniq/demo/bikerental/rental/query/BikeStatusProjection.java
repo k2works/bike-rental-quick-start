@@ -1,20 +1,20 @@
 package io.axoniq.demo.bikerental.rental.query;
 
-import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
-import io.axoniq.demo.bikerental.coreapi.rental.BikeStatus;
-import io.axoniq.demo.bikerental.coreapi.rental.BikeStatusNamedQueries;
-import io.axoniq.demo.bikerental.coreapi.rental.RentalStatus;
+import io.axoniq.demo.bikerental.coreapi.rental.*;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.queryhandling.QueryHandler;
+import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BikeStatusProjection {
 
     private final BikeStatusRepository bikeStatusRepository;
+    private final QueryUpdateEmitter updateEmitter;
 
-    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository) {
+    public BikeStatusProjection(BikeStatusRepository bikeStatusRepository, QueryUpdateEmitter updateEmitter) {
         this.bikeStatusRepository = bikeStatusRepository;
+        this.updateEmitter = updateEmitter;
     }
 
     @EventHandler

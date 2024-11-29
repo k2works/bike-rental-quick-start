@@ -9,7 +9,10 @@ Accept: application/json
 
 ### Bike status
 # Show bike status
-GET {{rental}}/bikes/c4db9a1c-4912-4877-b93b-bedb44383e3b
+GET {{rental}}/bikes/7ccaf4bc-f526-41fa-b496-1fa1214bedd6
 Accept: application/json
 
-
+### Request Bike
+# Request one of the available bikes
+POST {{rental}}/requestBike?bikeId=7ccaf4bc-f526-41fa-b496-1fa1214bedd6
+Accept: application/json

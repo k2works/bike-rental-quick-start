@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 @Component
 public class BikeRentalDataGenerator {
     private static final List<String> RENTERS = Arrays.asList("Allard", "Steven", "Josh", "David", "Marc", "Sara", "Milan", "Jeroen", "Marina", "Jeannot");
@@ -25,5 +27,8 @@ public class BikeRentalDataGenerator {
         this.queryGateway = queryGateway;
     }
 
+    public String randomRenter() {
+        return RENTERS.get(ThreadLocalRandom.current().nextInt(RENTERS.size()));
+    }
 }
 
