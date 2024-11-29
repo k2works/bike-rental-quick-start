@@ -1,9 +1,6 @@
 package io.axoniq.demo.bikerental.rental.command;
 
-import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
-import io.axoniq.demo.bikerental.coreapi.rental.BikeRequestedEvent;
-import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
-import io.axoniq.demo.bikerental.coreapi.rental.RequestBikeCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.*;
 import org.axonframework.test.aggregate.AggregateTestFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,4 +44,11 @@ public class BikeTest {
 
     }
 
+    @Test
+    void canApproveRequestedBike() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"))
+                .when(new ApproveRequestCommand("bikeId", "rider"))
+                .expectEvents(new BikeInUseEvent("bikeId", "rider"));
+    }
 }

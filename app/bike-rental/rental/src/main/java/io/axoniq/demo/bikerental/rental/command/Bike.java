@@ -1,15 +1,13 @@
 package io.axoniq.demo.bikerental.rental.command;
 
-import io.axoniq.demo.bikerental.coreapi.rental.BikeRegisteredEvent;
-import io.axoniq.demo.bikerental.coreapi.rental.BikeRequestedEvent;
-import io.axoniq.demo.bikerental.coreapi.rental.RegisterBikeCommand;
-import io.axoniq.demo.bikerental.coreapi.rental.RequestBikeCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.*;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
 import org.axonframework.spring.stereotype.Aggregate;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
@@ -47,6 +45,15 @@ public class Bike {
         return rentalReference;
     }
 
+    @CommandHandler
+    public void handle(ApproveRequestCommand command) {
+        if (!Objects.equals(reservedBy, command.renter())
+                || reservationConfirmed) {
+            return ;
+        }
+        apply(new BikeInUseEvent(command.bikeId(), command.renter()));
+    }
+
     @EventSourcingHandler
     protected void handle(BikeRegisteredEvent event) {
         this.bikeId = event.bikeId();
@@ -60,4 +67,9 @@ public class Bike {
         this.isAvailable = false;
     }
 
+    @EventSourcingHandler
+    protected void on(BikeInUseEvent event) {
+        this.isAvailable = false;
+        this.reservationConfirmed = true;
+    }
 }
