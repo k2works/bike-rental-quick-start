@@ -36,6 +36,19 @@ public class BikeStatusProjection {
                 });
     }
 
+    @EventHandler
+    public void on(BikeInUseEvent event) {
+        bikeStatusRepository.findById(event.bikeId())
+                .map(bs -> {
+                    bs.rentedBy(event.renter());
+                    return bs;
+                })
+                .ifPresent(bs -> {
+                    updateEmitter.emit(q -> "findAll".equals(q.getQueryName()), bs);
+                    updateEmitter.emit(String.class, event.bikeId()::equals, bs);
+                });
+    }
+
     @QueryHandler(queryName = BikeStatusNamedQueries.FIND_ALL)
     public Iterable<BikeStatus> findAll() {
         return bikeStatusRepository.findAll();

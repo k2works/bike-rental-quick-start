@@ -60,4 +60,9 @@ public class BikeStatus {
         this.renter = renter;
         this.status = RentalStatus.REQUESTED;
     }
+
+    public void rentedBy(String renter) {
+        this.renter = renter;
+        this.status = RentalStatus.RENTED;
+    }
 }
