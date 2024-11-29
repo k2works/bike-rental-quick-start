@@ -1,6 +1,6 @@
 ### Register a new bike
 @rental = http://localhost:8080
-@bikeId = b201521e-07f5-41cb-b2f5-78803f5e2444
+@bikeId = 70f60970-a697-4880-bacb-3f19c449b62b
 @renter = John Doe
 POST {{rental}}/bikes?bikeType=city&location=Utrecht
 

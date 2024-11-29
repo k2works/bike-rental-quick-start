@@ -23,6 +23,19 @@ public class BikeStatusProjection {
         bikeStatusRepository.save(bikeStatus);
     }
 
+    @EventHandler
+    public void on(BikeRequestedEvent event) {
+        bikeStatusRepository.findById(event.bikeId())
+                .map(bs -> {
+                    bs.requestedBy(event.renter());
+                    return bs;
+                })
+                .ifPresent(bs -> {
+                    updateEmitter.emit(q -> "findAll".equals(q.getQueryName()), bs);
+                    updateEmitter.emit(String.class, event.bikeId()::equals, bs);
+                });
+    }
+
     @QueryHandler(queryName = BikeStatusNamedQueries.FIND_ALL)
     public Iterable<BikeStatus> findAll() {
         return bikeStatusRepository.findAll();
