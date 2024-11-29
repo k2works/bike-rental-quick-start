@@ -30,5 +30,9 @@ public class BikeRentalDataGenerator {
     public String randomRenter() {
         return RENTERS.get(ThreadLocalRandom.current().nextInt(RENTERS.size()));
     }
+
+    public String randomLocation() {
+        return LOCATIONS.get(ThreadLocalRandom.current().nextInt(LOCATIONS.size()));
+    }
 }
 

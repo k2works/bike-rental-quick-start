@@ -63,6 +63,14 @@ public class Bike {
         apply(new RequestRejectedEvent(command.bikeId()));
     }
 
+    @CommandHandler
+    public void handle(ReturnBikeCommand command) {
+        if (this.isAvailable) {
+            throw new IllegalStateException("Bike was already returned");
+        }
+        apply(new BikeReturnedEvent(command.bikeId(), command.location()));
+    }
+
     @EventSourcingHandler
     protected void handle(BikeRegisteredEvent event) {
         this.bikeId = event.bikeId();
@@ -87,5 +95,12 @@ public class Bike {
         this.reservedBy = null;
         this.reservationConfirmed = false;
         this.isAvailable = true;
+    }
+
+    @EventSourcingHandler
+    protected void handle(BikeReturnedEvent event) {
+        this.isAvailable = true;
+        this.reservationConfirmed = false;
+        this.reservedBy = null;
     }
 }

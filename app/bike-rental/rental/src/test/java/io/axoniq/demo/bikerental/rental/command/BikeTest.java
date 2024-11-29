@@ -77,4 +77,26 @@ public class BikeTest {
                 .expectNoEvents()
                 .expectSuccessfulHandlerExecution();
     }
+
+    @Test
+    void canReturnedBikeInUse() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"),
+                        new BikeInUseEvent("bikeId", "rider"))
+                .when(new ReturnBikeCommand("bikeId", "NewLocation"))
+                .expectEvents(new BikeReturnedEvent("bikeId", "NewLocation"));
+    }
+
+    @Test
+    void canRequestRejectedBike() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"),
+                        new RequestRejectedEvent("bikeId"))
+                .when(new RequestBikeCommand("bikeId", "newRider"))
+                .expectEventsMatching(exactSequenceOf(
+                        messageWithPayload(matches((BikeRequestedEvent e) ->
+                                e.bikeId().equals("bikeId")
+                                        && e.renter().equals("newRider"))),
+                        andNoMore()));
+    }
 }
