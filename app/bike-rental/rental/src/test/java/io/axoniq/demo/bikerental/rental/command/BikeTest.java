@@ -68,4 +68,13 @@ public class BikeTest {
                 .expectSuccessfulHandlerExecution()
                 .expectNoEvents();
     }
+
+    @Test
+    void cannotApproveRequestedForAnotherRider() {
+        fixture.given(new BikeRegisteredEvent("bikeId", "city", "Amsterdam"),
+                        new BikeRequestedEvent("bikeId", "rider", "rentalId"))
+                .when(new ApproveRequestCommand("bikeId", "otherRider"))
+                .expectNoEvents()
+                .expectSuccessfulHandlerExecution();
+    }
 }
