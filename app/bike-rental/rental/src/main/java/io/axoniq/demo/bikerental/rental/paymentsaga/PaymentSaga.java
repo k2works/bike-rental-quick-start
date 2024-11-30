@@ -6,6 +6,7 @@ import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
 import io.axoniq.demo.bikerental.coreapi.rental.ApproveRequestCommand;
 import io.axoniq.demo.bikerental.coreapi.rental.BikeRequestedEvent;
 import io.axoniq.demo.bikerental.coreapi.rental.RejectRequestCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.RequestRejectedEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.deadline.DeadlineManager;
 import org.axonframework.deadline.annotation.DeadlineHandler;
@@ -54,6 +55,12 @@ public class PaymentSaga {
     @SagaEventHandler(associationProperty = "paymentReference")
     public void on(PaymentRejectedEvent event) {
         commandGateway.send(new RejectRequestCommand(bikeId, renter));
+    }
+
+    @EndSaga
+    @SagaEventHandler(associationProperty = "bikeId")
+    public void on(RequestRejectedEvent event) {
+        deadlineManager.cancelAllWithinScope("cancelPayment");
     }
 
     @DeadlineHandler(deadlineName = "retryPayment")

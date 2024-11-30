@@ -6,6 +6,7 @@ import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
 import io.axoniq.demo.bikerental.coreapi.rental.ApproveRequestCommand;
 import io.axoniq.demo.bikerental.coreapi.rental.BikeRequestedEvent;
 import io.axoniq.demo.bikerental.coreapi.rental.RejectRequestCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.RequestRejectedEvent;
 import org.axonframework.test.saga.SagaTestFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,5 +40,13 @@ public class PaymentSagaTest {
         fixture.givenAPublished(new BikeRequestedEvent("bikeId", "renter", "rentalRef"))
                 .whenPublishingA(new PaymentRejectedEvent("paymentId", "rentalRef"))
                 .expectDispatchedCommands(new RejectRequestCommand("bikeId", "renter"));
+    }
+
+    @Test
+    void shouldEndSagaWhenRequestIsRejected() {
+        fixture.givenAPublished(new BikeRequestedEvent("bikeId", "renter", "rentalRef"))
+                .whenPublishingA(new RequestRejectedEvent("bikeId"))
+                .expectActiveSagas(0);
+
     }
 }
