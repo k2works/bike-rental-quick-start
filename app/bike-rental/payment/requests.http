@@ -1,5 +1,5 @@
 @payment = http://localhost:8081
-@paymentReference = eaeb5a1f-13df-4611-9e32-228af47e7d01
+@paymentReference = eaeb5a1f-13df-4611-9e32-228af47e7d02
 @paymentId = 04955f83-684d-4d9e-aff7-65841d170418
 
 ### Prepare Payment
@@ -25,3 +25,6 @@ Accept: application/json
 POST {{payment}}/rejectPayment?id={{paymentId}}
 Accept: application/json
 
+### Get Payment All Status
+GET {{payment}}/status
+Accept: application/json

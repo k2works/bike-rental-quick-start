@@ -33,6 +33,11 @@ public class PaymentStatusProjection {
         return paymentStatusRepository.findByReferenceAndStatus(paymentReference, PENDING).map(PaymentStatus::getId).orElse(null);
     }
 
+    @QueryHandler(queryName = "getAllPayments")
+    public Iterable<PaymentStatus> findAll() {
+        return paymentStatusRepository.findAll();
+    }
+
     @EventHandler
     public void handle(PaymentPreparedEvent event) {
         paymentStatusRepository.save(new PaymentStatus(event.paymentId(), event.amount(), event.paymentReference()));

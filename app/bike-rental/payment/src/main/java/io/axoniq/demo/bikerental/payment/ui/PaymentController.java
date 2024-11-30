@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -50,5 +51,9 @@ public class PaymentController {
         return commandGateway.send(new RejectPaymentCommand(paymentId));
     }
 
+    @GetMapping("/status")
+    public Flux<PaymentStatus> getStatus(@RequestParam(value = "status", required = false) PaymentStatus.Status status) {
+        return Flux.from(queryGateway.streamingQuery("getAllPayments", status, PaymentStatus.class));
+    }
 
 }
