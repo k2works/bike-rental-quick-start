@@ -17,6 +17,7 @@ subprojects {
     }
 
     dependencies {
+        runtimeOnly("org.springframework.boot:spring-boot-docker-compose")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 }

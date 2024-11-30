@@ -22,7 +22,6 @@ dependencyManagement {
 dependencies {
 	implementation(platform("org.axonframework:axon-bom:$axonVersion"))
 	implementation("io.axoniq.console:console-framework-client-spring-boot-starter:1.7.3")
-	runtimeOnly("org.springframework.boot:spring-boot-docker-compose")
 
 	implementation("org.axonframework:axon-spring-boot-starter")
 	implementation("io.axoniq.console:console-framework-client-spring-boot-starter")
