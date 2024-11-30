@@ -1,12 +1,16 @@
 package io.axoniq.demo.bikerental.rental.ui;
 
+import io.axoniq.demo.bikerental.coreapi.payment.PaymentStatusNamedQueries;
 import io.axoniq.demo.bikerental.coreapi.rental.*;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
+import org.axonframework.queryhandling.SubscriptionQueryResult;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -74,5 +78,14 @@ public class RentalController {
     @PostMapping("/returnBike")
     public CompletableFuture<String> returnBike(@RequestParam("bikeId") String bikeId) {
         return commandGateway.send(new ReturnBikeCommand(bikeId, this.bikeRentalDataGenerator.randomLocation()));
+    }
+
+    @GetMapping("findPayment")
+    public Mono<String> getPaymentId(@RequestParam("reference") String paymentRef) {
+        SubscriptionQueryResult<String, String> queryResult = queryGateway.subscriptionQuery(PaymentStatusNamedQueries.GET_PAYMENT_ID, paymentRef, String.class, String.class);
+        return queryResult.initialResult().concatWith(queryResult.updates())
+                .filter(Objects::nonNull)
+                .next();
+
     }
 }

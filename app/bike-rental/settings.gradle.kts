@@ -1,2 +1,2 @@
 rootProject.name = "bike-rental"
-include("core-api", "rental")
+include("core-api", "rental", "payment")
