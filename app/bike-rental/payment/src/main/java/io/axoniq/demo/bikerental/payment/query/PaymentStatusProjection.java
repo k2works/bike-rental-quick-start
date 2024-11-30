@@ -7,6 +7,8 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.springframework.stereotype.Component;
 
+import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.PENDING;
+
 @Component
 public class PaymentStatusProjection {
 
@@ -22,6 +24,11 @@ public class PaymentStatusProjection {
     @QueryHandler(queryName = "getStatus")
     public PaymentStatus getStatus(String paymentId) {
         return paymentStatusRepository.findById(paymentId).orElse(null);
+    }
+
+    @QueryHandler(queryName = "getPaymentId")
+    public String getPaymentId(String paymentReference) {
+        return paymentStatusRepository.findByReferenceAndStatus(paymentReference, PENDING).map(PaymentStatus::getId).orElse(null);
     }
 
     @EventHandler

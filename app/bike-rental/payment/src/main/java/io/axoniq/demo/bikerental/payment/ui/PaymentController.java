@@ -33,4 +33,8 @@ public class PaymentController {
         return queryGateway.query("getStatus", paymentId, PaymentStatus.class);
     }
 
+    @GetMapping("/findPayment")
+    public CompletableFuture<String> findPaymentId(@RequestParam("reference") String paymentReference) {
+        return queryGateway.query("getPaymentId", paymentReference, String.class);
+    }
 }
