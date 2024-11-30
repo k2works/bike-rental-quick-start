@@ -24,7 +24,7 @@ public class Payment {
 
     @CommandHandler
     public Payment(PreparePaymentCommand command) {
-        String paymentId = (command.paymentId() == null) ? UUID.randomUUID().toString() : command.paymentId();
+        String paymentId = UUID.randomUUID().toString();
         apply(new PaymentPreparedEvent(paymentId, command.amount(), command.paymentReference()));
     }
 

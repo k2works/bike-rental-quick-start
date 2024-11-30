@@ -28,7 +28,7 @@ public class PaymentController {
 
     @PostMapping("/preparePayment")
     public CompletableFuture<String> preparePayment(@RequestParam("amount") int amount, @RequestParam("rentalReference") String rentalReference) {
-        return commandGateway.send(new PreparePaymentCommand(null, amount, rentalReference));
+        return commandGateway.send(new PreparePaymentCommand(amount, rentalReference));
     }
 
     @GetMapping("/status/{paymentId}")

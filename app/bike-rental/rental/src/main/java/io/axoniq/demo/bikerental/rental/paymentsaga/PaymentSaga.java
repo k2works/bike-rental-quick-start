@@ -78,7 +78,7 @@ public class PaymentSaga {
     @DeadlineHandler(deadlineName = "retryPayment")
     public void preparePayment(String rentalReference) {
         ScopeDescriptor scope = Scope.describeCurrentScope();
-        commandGateway.send(new PreparePaymentCommand(null,10, rentalReference))
+        commandGateway.send(new PreparePaymentCommand(10, rentalReference))
                 .whenComplete((r, e) -> {
                     if (e != null) {
                         deadlineManager.schedule(Duration.ofSeconds(5), "retryPayment", rentalReference, scope);

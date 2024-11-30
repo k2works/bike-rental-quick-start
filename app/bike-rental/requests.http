@@ -1,7 +1,11 @@
-### Register a new bike
 @rental = http://localhost:8080
-@bikeId = 7c0ed2dd-0b8d-4396-b34c-193f15d35321
+@bikeId = 72b34446-c532-4fa8-a90e-238ed5b38f73
 @renter = John Doe
+@payment = http://localhost:8081
+@reference = 94b387d8-d111-415f-9b18-139857dfd046
+@paymentId = bc2e1933-23ba-453a-84de-05e0ababde71
+
+### Register a new bike
 POST {{rental}}/bikes?bikeType=city&location=Utrecht
 
 ### List all
@@ -19,16 +23,35 @@ Accept: application/json
 POST {{rental}}/requestBike?bikeId={{bikeId}}&renter={{renter}}
 Accept: application/json
 
-### Approve Request
-# Approve the request
-POST {{rental}}/approveRequest?bikeId={{bikeId}}&renter={{renter}}
+### Find paymentID
+# Find the payment for a specific payment reference
+GET {{payment}}/findPayment?reference={{reference}}
 Accept: application/json
 
-### Reject Request
-# Reject the request
-POST {{rental}}/rejectRequest?bikeId={{bikeId}}&renter={{renter}}
+### Accept Payment
+# Accept a payment
+POST {{payment}}/acceptPayment?id={{paymentId}}
+Accept: application/json
+
+### Reject Payment
+# Reject a payment
+POST {{payment}}/rejectPayment?id={{paymentId}}
+Accept: application/json
+
+### Bike status (2)
+# Show bike status
+GET {{rental}}/bikes/{{bikeId}}
+Accept: application/json
 
 ### Return bike
 # Return a bike
 POST {{rental}}/returnBike?bikeId={{bikeId}}
+Accept: application/json
+
+### Get Payment Status
+GET {{payment}}/status/{{paymentId}}
+Accept: application/json
+
+### Get Payment All Status
+GET {{payment}}/status
 Accept: application/json

@@ -14,13 +14,6 @@ public class PaymentTest {
     }
 
     @Test
-    void canPreparePayment() {
-        fixture.givenNoPriorActivity()
-                .when(new PreparePaymentCommand("paymentId", 100, "payment-1234"))
-                .expectEvents(new PaymentPreparedEvent("paymentId", 100, "payment-1234"));
-    }
-
-    @Test
     void canConfirmPayment() {
         fixture.given(new PaymentPreparedEvent("paymentId", 100, "payment-1234"))
                 .when(new ConfirmPaymentCommand("paymentId"))

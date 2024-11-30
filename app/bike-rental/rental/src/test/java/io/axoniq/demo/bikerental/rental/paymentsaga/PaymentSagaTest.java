@@ -23,7 +23,7 @@ public class PaymentSagaTest {
     void shouldStartSagaOnBikeRequested() {
         fixture.givenNoPriorActivity()
                 .whenPublishingA(new BikeRequestedEvent("bikeId", "renter", "payRef"))
-                .expectDispatchedCommands(new PreparePaymentCommand(null, 10, "payRef"))
+                .expectDispatchedCommands(new PreparePaymentCommand( 10, "payRef"))
                 .expectActiveSagas(1);
     }
 
