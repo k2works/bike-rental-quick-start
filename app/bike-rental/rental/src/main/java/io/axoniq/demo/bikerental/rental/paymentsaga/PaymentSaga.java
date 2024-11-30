@@ -1,6 +1,8 @@
 package io.axoniq.demo.bikerental.rental.paymentsaga;
 
+import io.axoniq.demo.bikerental.coreapi.payment.PaymentConfirmedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
+import io.axoniq.demo.bikerental.coreapi.rental.ApproveRequestCommand;
 import io.axoniq.demo.bikerental.coreapi.rental.BikeRequestedEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.deadline.DeadlineManager;
@@ -38,6 +40,13 @@ public class PaymentSaga {
         this.renter = event.renter();
         SagaLifecycle.associateWith("paymentReference", event.rentalReference());
         preparePayment(event.rentalReference());
+    }
+
+    @EndSaga
+    @SagaEventHandler(associationProperty = "paymentReference")
+    public void on(PaymentConfirmedEvent event) {
+        // we approve the bike request
+        commandGateway.send(new ApproveRequestCommand(bikeId, renter));
     }
 
     @DeadlineHandler(deadlineName = "retryPayment")
