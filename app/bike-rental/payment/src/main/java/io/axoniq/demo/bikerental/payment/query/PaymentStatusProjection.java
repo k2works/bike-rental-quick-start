@@ -1,5 +1,6 @@
 package io.axoniq.demo.bikerental.payment.query;
 
+import io.axoniq.demo.bikerental.coreapi.payment.PaymentConfirmedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentPreparedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus;
 import org.axonframework.eventhandling.EventHandler;
@@ -7,6 +8,7 @@ import org.axonframework.queryhandling.QueryHandler;
 import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.springframework.stereotype.Component;
 
+import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.APPROVED;
 import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.PENDING;
 
 @Component
@@ -36,4 +38,10 @@ public class PaymentStatusProjection {
         paymentStatusRepository.save(new PaymentStatus(event.paymentId(), event.amount(), event.paymentReference()));
         updateEmitter.emit(String.class, event.paymentReference()::equals, event.paymentId());
     }
+
+    @EventHandler
+    public void handle(PaymentConfirmedEvent event) {
+        paymentStatusRepository.findById(event.paymentId()).ifPresent(s -> s.setStatus(APPROVED));
+    }
+
 }

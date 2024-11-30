@@ -15,3 +15,7 @@ Accept: application/json
 GET {{payment}}/findPayment?reference={{paymentReference}}
 Accept: application/json
 
+### Accept Payment
+# Accept a payment
+POST {{payment}}/acceptPayment?id={{paymentId}}
+Accept: application/json

@@ -1,5 +1,6 @@
 package io.axoniq.demo.bikerental.payment.ui;
 
+import io.axoniq.demo.bikerental.coreapi.payment.ConfirmPaymentCommand;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus;
 import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -36,5 +37,10 @@ public class PaymentController {
     @GetMapping("/findPayment")
     public CompletableFuture<String> findPaymentId(@RequestParam("reference") String paymentReference) {
         return queryGateway.query("getPaymentId", paymentReference, String.class);
+    }
+
+    @PostMapping("/acceptPayment")
+    public CompletableFuture<Void> confirmPayment(@RequestParam("id") String paymentId) {
+        return commandGateway.send(new ConfirmPaymentCommand(paymentId));
     }
 }
