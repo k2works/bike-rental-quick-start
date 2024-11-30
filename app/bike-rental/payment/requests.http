@@ -1,6 +1,6 @@
 @payment = http://localhost:8081
-@paymentReference = eaeb5a1f-13df-4611-9e32-228af47e7d04
-@paymentId = d82df2c3-1120-4994-84ea-f6eddcc85f45
+@paymentReference = eaeb5a1f-13df-4611-9e32-228af47e7d01
+@paymentId = 04955f83-684d-4d9e-aff7-65841d170418
 
 ### Prepare Payment
 POST {{payment}}/preparePayment?amount=1000&rentalReference={{paymentReference}}
@@ -19,3 +19,9 @@ Accept: application/json
 # Accept a payment
 POST {{payment}}/acceptPayment?id={{paymentId}}
 Accept: application/json
+
+### Reject Payment
+# Reject a payment
+POST {{payment}}/rejectPayment?id={{paymentId}}
+Accept: application/json
+

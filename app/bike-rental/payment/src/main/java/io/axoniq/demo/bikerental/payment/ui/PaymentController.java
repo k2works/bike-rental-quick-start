@@ -3,6 +3,7 @@ package io.axoniq.demo.bikerental.payment.ui;
 import io.axoniq.demo.bikerental.coreapi.payment.ConfirmPaymentCommand;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus;
 import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
+import io.axoniq.demo.bikerental.coreapi.payment.RejectPaymentCommand;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,4 +44,11 @@ public class PaymentController {
     public CompletableFuture<Void> confirmPayment(@RequestParam("id") String paymentId) {
         return commandGateway.send(new ConfirmPaymentCommand(paymentId));
     }
+
+    @PostMapping("/rejectPayment")
+    public CompletableFuture<Void> rejectPayment(@RequestParam("id") String paymentId) {
+        return commandGateway.send(new RejectPaymentCommand(paymentId));
+    }
+
+
 }

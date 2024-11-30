@@ -2,14 +2,14 @@ package io.axoniq.demo.bikerental.payment.query;
 
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentConfirmedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentPreparedEvent;
+import io.axoniq.demo.bikerental.coreapi.payment.PaymentRejectedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.queryhandling.QueryHandler;
 import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.springframework.stereotype.Component;
 
-import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.APPROVED;
-import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.PENDING;
+import static io.axoniq.demo.bikerental.coreapi.payment.PaymentStatus.Status.*;
 
 @Component
 public class PaymentStatusProjection {
@@ -44,4 +44,8 @@ public class PaymentStatusProjection {
         paymentStatusRepository.findById(event.paymentId()).ifPresent(s -> s.setStatus(APPROVED));
     }
 
+    @EventHandler
+    public void handle(PaymentRejectedEvent event) {
+        paymentStatusRepository.findById(event.paymentId()).ifPresent(s -> s.setStatus(REJECTED));
+    }
 }
