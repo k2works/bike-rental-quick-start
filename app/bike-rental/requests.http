@@ -1,9 +1,9 @@
 @rental = http://localhost:8080
-@bikeId = 72b34446-c532-4fa8-a90e-238ed5b38f73
+@bikeId = df35465e-3adf-47e8-bd2b-e1b33f7bd923
 @renter = John Doe
 @payment = http://localhost:8081
-@reference = 94b387d8-d111-415f-9b18-139857dfd046
-@paymentId = bc2e1933-23ba-453a-84de-05e0ababde71
+@reference = e5e43e4a-a344-4c5d-90fe-8be0f3c3cc0e
+@paymentId = 1a784fde-e4ee-479e-afd7-8dea7e5b542a
 
 ### Register a new bike
 POST {{rental}}/bikes?bikeType=city&location=Utrecht

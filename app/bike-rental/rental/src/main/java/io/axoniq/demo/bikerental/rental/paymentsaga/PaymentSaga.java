@@ -1,5 +1,7 @@
 package io.axoniq.demo.bikerental.rental.paymentsaga;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentConfirmedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentPreparedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentRejectedEvent;
@@ -34,6 +36,13 @@ public class PaymentSaga {
 
     private String bikeId;
     private String renter;
+
+    @JsonCreator
+    public PaymentSaga(@JsonProperty("bikeId") String bikeId,
+                       @JsonProperty("renter") String renter) {
+        this.bikeId = bikeId;
+        this.renter = renter;
+    }
 
     public PaymentSaga() {
     }
@@ -79,10 +88,23 @@ public class PaymentSaga {
     public void preparePayment(String rentalReference) {
         ScopeDescriptor scope = Scope.describeCurrentScope();
         commandGateway.send(new PreparePaymentCommand(10, rentalReference))
-                .whenComplete((r, e) -> {
-                    if (e != null) {
-                        deadlineManager.schedule(Duration.ofSeconds(5), "retryPayment", rentalReference, scope);
-                    }
-                });
+                      .whenComplete((r, e) -> {
+                          if (e != null) {
+                              deadlineManager.schedule(Duration.ofSeconds(5), "retryPayment", rentalReference, scope);
+                          }
+                      });
     }
+
+    // getters to satisfy Jackson requirements for JSON serialization
+
+    @SuppressWarnings("unused")
+    public String getBikeId() {
+        return bikeId;
+    }
+
+    @SuppressWarnings("unused")
+    public String getRenter() {
+        return renter;
+    }
+
 }

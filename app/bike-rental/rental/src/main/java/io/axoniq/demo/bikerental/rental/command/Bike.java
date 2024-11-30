@@ -1,5 +1,7 @@
 package io.axoniq.demo.bikerental.rental.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.axoniq.demo.bikerental.coreapi.rental.*;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -12,7 +14,7 @@ import java.util.UUID;
 
 import static org.axonframework.modelling.command.AggregateLifecycle.apply;
 
-@Aggregate
+@Aggregate(snapshotTriggerDefinition = "bikeSnapshotDefinition")
 public class Bike {
     @AggregateIdentifier
     private String bikeId;
@@ -22,6 +24,18 @@ public class Bike {
     private boolean reservationConfirmed;
 
     public Bike() {
+    }
+
+    /* Constructor used to reconstruct the aggregate from a JSON based snapshot with Jackson */
+    @JsonCreator
+    public Bike(@JsonProperty("bikeId") String bikeId,
+                @JsonProperty("available") boolean isAvailable,
+                @JsonProperty("reservedBy") String reservedBy,
+                @JsonProperty("reservationConfirmed") boolean reservationConfirmed) {
+        this.bikeId = bikeId;
+        this.isAvailable = isAvailable;
+        this.reservedBy = reservedBy;
+        this.reservationConfirmed = reservationConfirmed;
     }
 
     @CommandHandler
@@ -102,5 +116,27 @@ public class Bike {
         this.isAvailable = true;
         this.reservationConfirmed = false;
         this.reservedBy = null;
+    }
+
+    // getters for Jackson / JSON Serialization
+
+    @SuppressWarnings("unused")
+    public String getBikeId() {
+        return bikeId;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    @SuppressWarnings("unused")
+    public String getReservedBy() {
+        return reservedBy;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isReservationConfirmed() {
+        return reservationConfirmed;
     }
 }
