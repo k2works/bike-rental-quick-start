@@ -1,5 +1,7 @@
 package io.axoniq.demo.bikerental.payment.command;
 
+import io.axoniq.demo.bikerental.coreapi.payment.ConfirmPaymentCommand;
+import io.axoniq.demo.bikerental.coreapi.payment.PaymentConfirmedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PaymentPreparedEvent;
 import io.axoniq.demo.bikerental.coreapi.payment.PreparePaymentCommand;
 import org.axonframework.commandhandling.CommandHandler;
@@ -29,9 +31,21 @@ public class Payment {
         apply(new PaymentPreparedEvent(paymentId, command.amount(), command.paymentReference()));
     }
 
+    @CommandHandler
+    public void handle(ConfirmPaymentCommand command) {
+        if (!closed) {
+            apply(new PaymentConfirmedEvent(command.paymentId(), paymentReference));
+        }
+    }
+
     @EventSourcingHandler
     protected void on(PaymentPreparedEvent event) {
         this.id = event.paymentId();
         this.paymentReference = event.paymentReference();
+    }
+
+    @EventSourcingHandler
+    protected void on(PaymentConfirmedEvent event) {
+        this.closed = true;
     }
 }
