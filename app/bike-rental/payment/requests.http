@@ -1,0 +1,11 @@
+@payment = http://localhost:8081
+@paymentId = 97116ff7-05a2-46be-ad0b-f3f6b14eb59c
+
+### Prepare Payment
+POST {{payment}}/preparePayment?amount=1000&rentalReference=eaeb5a1f-13df-4611-9e32-228af47e7d04
+Accept: application/json
+
+### Get Payment Status
+GET {{payment}}/status/{{paymentId}}
+Accept: application/json
+

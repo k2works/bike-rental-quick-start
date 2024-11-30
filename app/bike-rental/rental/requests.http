@@ -1,0 +1,34 @@
+### Register a new bike
+@rental = http://localhost:8080
+@bikeId = 7c0ed2dd-0b8d-4396-b34c-193f15d35321
+@renter = John Doe
+POST {{rental}}/bikes?bikeType=city&location=Utrecht
+
+### List all
+# Show available bikes
+GET {{rental}}/bikes
+Accept: application/json
+
+### Bike status
+# Show bike status
+GET {{rental}}/bikes/{{bikeId}}
+Accept: application/json
+
+### Request Bike
+# Request one of the available bikes
+POST {{rental}}/requestBike?bikeId={{bikeId}}&renter={{renter}}
+Accept: application/json
+
+### Approve Request
+# Approve the request
+POST {{rental}}/approveRequest?bikeId={{bikeId}}&renter={{renter}}
+Accept: application/json
+
+### Reject Request
+# Reject the request
+POST {{rental}}/rejectRequest?bikeId={{bikeId}}&renter={{renter}}
+
+### Return bike
+# Return a bike
+POST {{rental}}/returnBike?bikeId={{bikeId}}
+Accept: application/json
