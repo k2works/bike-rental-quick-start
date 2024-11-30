@@ -28,9 +28,25 @@ public class PaymentTest {
     }
 
     @Test
+    void cannotConfirmPaymentTwice() {
+        fixture.given(new PaymentPreparedEvent("paymentId", 100, "payment-1234"),
+                      new PaymentConfirmedEvent("paymentId", "payment-1234"))
+                .when(new ConfirmPaymentCommand("paymentId"))
+                .expectNoEvents();
+    }
+
+    @Test
     void canRejectPayment() {
         fixture.given(new PaymentPreparedEvent("paymentId", 100, "payment-1234"))
                 .when(new RejectPaymentCommand("paymentId"))
                 .expectEvents(new PaymentRejectedEvent("paymentId", "payment-1234"));
+    }
+
+    @Test
+    void cannotRejectPaymentTwice() {
+        fixture.given(new PaymentPreparedEvent("paymentId", 100, "payment-1234"),
+                      new PaymentRejectedEvent("paymentId", "payment-1234"))
+                .when(new RejectPaymentCommand("paymentId"))
+                .expectNoEvents();
     }
 }
